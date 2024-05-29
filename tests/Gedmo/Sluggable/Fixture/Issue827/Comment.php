@@ -34,34 +34,32 @@ class Comment
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="title", length=64)
      */
     #[ORM\Column(name: 'title', length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var Post|null
-     *
      * @ORM\ManyToOne(targetEntity="Post", inversedBy="comments")
      * @ORM\JoinColumns({
-     *    @ORM\JoinColumn(name="post_title", referencedColumnName="title", nullable=false),
-     *    @ORM\JoinColumn(name="post_slug", referencedColumnName="slug", nullable=false)
+     *     @ORM\JoinColumn(name="post_title", referencedColumnName="title", nullable=false),
+     *     @ORM\JoinColumn(name="post_slug", referencedColumnName="slug", nullable=false)
      * })
      */
     #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'comments')]
     #[ORM\JoinColumn(name: 'post_title', referencedColumnName: 'title', nullable: false)]
     #[ORM\JoinColumn(name: 'post_slug', referencedColumnName: 'slug', nullable: false)]
-    private $post;
+    private ?Post $post = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(updatable=true, unique=true, unique_base="post", fields={"title"})
+     *
      * @ORM\Column(length=64, nullable=true)
      */
-    #[ORM\Column(name: 'title', length: 64)]
+    #[Gedmo\Slug(updatable: true, unique: true, unique_base: 'post', fields: ['title'])]
+    #[ORM\Column(length: 64, nullable: true)]
     private $slug;
 
     public function getId(): ?int

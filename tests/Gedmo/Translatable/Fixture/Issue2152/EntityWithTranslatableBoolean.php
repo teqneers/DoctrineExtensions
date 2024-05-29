@@ -37,31 +37,27 @@ class EntityWithTranslatableBoolean
 
     /**
      * @Gedmo\Translatable
-     * @ORM\Column(type="string", nullable=true)
      *
-     * @var string|null
+     * @ORM\Column(type="string", nullable=true)
      */
     #[ORM\Column(type: Types::STRING, nullable: true)]
     #[Gedmo\Translatable]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @Gedmo\Translatable
-     * @ORM\Column(type="string", nullable=true)
      *
-     * @var string|null
+     * @ORM\Column(type="string", nullable=true)
      */
     #[ORM\Column(type: Types::STRING, nullable: true)]
     #[Gedmo\Translatable]
-    private $isOperating;
+    private ?string $isOperating = null;
 
     /**
-     * @var string
-     *
-     * @Gedmo\Locale()
+     * @Gedmo\Locale
      */
     #[Gedmo\Locale]
-    private $locale;
+    private ?string $locale = null;
 
     public function __construct(string $title, string $isOperating = '0')
     {
@@ -90,7 +86,7 @@ class EntityWithTranslatableBoolean
         return $this->isOperating;
     }
 
-    public function getLocale(): string
+    public function getLocale(): ?string
     {
         return $this->locale;
     }

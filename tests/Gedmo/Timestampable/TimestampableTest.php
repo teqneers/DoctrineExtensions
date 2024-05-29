@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Timestampable;
 
 use Doctrine\Common\EventManager;
-use Doctrine\ORM\Proxy\Proxy;
-use Gedmo\Tests\Mapping\Fixture\Xml\Timestampable;
+use Doctrine\Persistence\Proxy;
+use Gedmo\Tests\Clock;
 use Gedmo\Tests\Timestampable\Fixture\Article;
 use Gedmo\Tests\Timestampable\Fixture\Author;
 use Gedmo\Tests\Timestampable\Fixture\Comment;
@@ -28,26 +28,27 @@ use Gedmo\Timestampable\TimestampableListener;
  */
 final class TimestampableTest extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const COMMENT = Comment::class;
-    public const TYPE = Type::class;
+    private const ARTICLE = Article::class;
+    private const COMMENT = Comment::class;
+    private const TYPE = Type::class;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        $listener = new TimestampableListener();
+        $listener->setClock(new Clock());
+
         $evm = new EventManager();
-        $evm->addEventSubscriber(new TimestampableListener());
+        $evm->addEventSubscriber($listener);
 
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
     /**
      * issue #1255
-     *
-     * @test
      */
-    public function shouldHandleDetatchedAndMergedBackEntities()
+    public function testShouldHandleDetatchedAndMergedBackEntities(): void
     {
         $sport = new Article();
         $sport->setTitle('Sport');
@@ -64,10 +65,8 @@ final class TimestampableTest extends BaseTestCaseORM
 
     /**
      * issue #1255
-     *
-     * @test
      */
-    public function shouldHandleDetatchedAndMergedBackEntitiesAfterPersist()
+    public function testShouldHandleDetatchedAndMergedBackEntitiesAfterPersist(): void
     {
         $sport = new Article();
         $sport->setTitle('Sport');
@@ -92,10 +91,7 @@ final class TimestampableTest extends BaseTestCaseORM
         static::assertNotSame($newSport->getUpdated(), $updated, 'There was a change, should not remain the same');
     }
 
-    /**
-     * @test
-     */
-    public function shouldHandleStandardBehavior()
+    public function testShouldHandleStandardBehavior(): void
     {
         $sport = new Article();
         $sport->setTitle('Sport');
@@ -128,7 +124,7 @@ final class TimestampableTest extends BaseTestCaseORM
         $sport->setAuthor($author);
 
         $sportComment = $this->em->getRepository(self::COMMENT)->findOneBy(['message' => 'hello']);
-        static::assertNotNull($scm = $sportComment->getModified());
+        static::assertNotNull($sportComment->getModified());
         static::assertNull($sportComment->getClosed());
 
         $sportComment->setStatus(1);
@@ -175,10 +171,7 @@ final class TimestampableTest extends BaseTestCaseORM
         static::assertNotSame($sport->getAuthorChanged(), $sa, 'Author must have changed after update');
     }
 
-    /**
-     * @test
-     */
-    public function shouldBeAbleToForceDates()
+    public function testShouldBeAbleToForceDates(): void
     {
         $sport = new Article();
         $sport->setTitle('sport forced');
@@ -223,10 +216,7 @@ final class TimestampableTest extends BaseTestCaseORM
         $this->em->clear();
     }
 
-    /**
-     * @test
-     */
-    public function shouldSolveIssue767()
+    public function testShouldSolveIssue767(): void
     {
         $type = new Type();
         $type->setTitle('Published');
@@ -290,7 +280,7 @@ final class TimestampableTest extends BaseTestCaseORM
         static::assertInstanceOf(\DateTime::class, $found->getReachedRelevantLevel());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,

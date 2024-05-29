@@ -26,10 +26,10 @@ use Gedmo\Tree\TreeListener;
  */
 final class MultiInheritanceWithSingleTableTest extends BaseTestCaseORM
 {
-    public const CAR = Car::class;
-    public const BUS = Bus::class;
-    public const VEHICLE = Vehicle::class;
-    public const ENGINE = Engine::class;
+    private const CAR = Car::class;
+    private const BUS = Bus::class;
+    private const VEHICLE = Vehicle::class;
+    private const ENGINE = Engine::class;
 
     protected function setUp(): void
     {
@@ -38,10 +38,10 @@ final class MultiInheritanceWithSingleTableTest extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new TreeListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testConsistence()
+    public function testConsistence(): void
     {
         $this->populate();
         $this->em->clear();
@@ -103,7 +103,7 @@ final class MultiInheritanceWithSingleTableTest extends BaseTestCaseORM
         var_dump('processed: '.$num);
     }*/
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::VEHICLE,

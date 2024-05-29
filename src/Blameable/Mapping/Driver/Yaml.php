@@ -9,6 +9,7 @@
 
 namespace Gedmo\Blameable\Mapping\Driver;
 
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Gedmo\Exception\InvalidMappingException;
 use Gedmo\Mapping\Driver;
 use Gedmo\Mapping\Driver\File;
@@ -20,9 +21,24 @@ use Gedmo\Mapping\Driver\File;
  * extension.
  *
  * @author David Buchmann <mail@davidbu.ch>
+ *
+ * @deprecated since gedmo/doctrine-extensions 3.5, will be removed in version 4.0.
+ *
+ * @internal
  */
 class Yaml extends File implements Driver
 {
+    /**
+     * List of types which are valid for blameable
+     *
+     * @var string[]
+     */
+    private const VALID_TYPES = [
+        'one',
+        'string',
+        'int',
+    ];
+
     /**
      * File extension
      *
@@ -30,20 +46,6 @@ class Yaml extends File implements Driver
      */
     protected $_extension = '.dcm.yml';
 
-    /**
-     * List of types which are valid for blameable
-     *
-     * @var array
-     */
-    private $validTypes = [
-        'one',
-        'string',
-        'int',
-    ];
-
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $mapping = $this->_getMapping($meta->getName());
@@ -109,11 +111,10 @@ class Yaml extends File implements Driver
                 }
             }
         }
+
+        return $config;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function _loadMappingFile($file)
     {
         return \Symfony\Component\Yaml\Yaml::parse(file_get_contents($file));
@@ -122,8 +123,8 @@ class Yaml extends File implements Driver
     /**
      * Checks if $field type is valid
      *
-     * @param \Doctrine\ODM\MongoDB\Mapping\ClassMetadata $meta
-     * @param string                                      $field
+     * @param ClassMetadata $meta
+     * @param string        $field
      *
      * @return bool
      */
@@ -131,6 +132,6 @@ class Yaml extends File implements Driver
     {
         $mapping = $meta->getFieldMapping($field);
 
-        return $mapping && in_array($mapping['type'], $this->validTypes, true);
+        return $mapping && in_array($mapping['type'], self::VALID_TYPES, true);
     }
 }

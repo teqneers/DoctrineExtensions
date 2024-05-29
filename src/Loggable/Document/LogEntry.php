@@ -10,27 +10,30 @@
 namespace Gedmo\Loggable\Document;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoODM;
+use Gedmo\Loggable\Document\MappedSuperclass\AbstractLogEntry;
 use Gedmo\Loggable\Document\Repository\LogEntryRepository;
+use Gedmo\Loggable\Loggable;
 
 /**
  * Gedmo\Loggable\Document\LogEntry
  *
- * @MongoODM\Document(
- *     repositoryClass="Gedmo\Loggable\Document\Repository\LogEntryRepository",
- *     indexes={
- *         @MongoODM\Index(keys={"objectId"="asc", "objectClass"="asc", "version"="asc"}),
- *         @MongoODM\Index(keys={"loggedAt"="asc"}),
- *         @MongoODM\Index(keys={"objectClass"="asc"}),
- *         @MongoODM\Index(keys={"username"="asc"})
- *     }
- * )
+ * @MongoODM\Document(repositoryClass="Gedmo\Loggable\Document\Repository\LogEntryRepository")
+ *
+ * @MongoODM\Index(keys={"objectId": "asc", "objectClass": "asc", "version": "asc"})
+ * @MongoODM\Index(keys={"loggedAt": "asc"})
+ * @MongoODM\Index(keys={"objectClass": "asc"})
+ * @MongoODM\Index(keys={"username": "asc"})
+ *
+ * @phpstan-template T of Loggable|object
+ *
+ * @phpstan-extends AbstractLogEntry<T>
  */
 #[MongoODM\Document(repositoryClass: LogEntryRepository::class)]
 #[MongoODM\Index(keys: ['objectId' => 'asc', 'objectClass' => 'asc', 'version' => 'asc'])]
 #[MongoODM\Index(keys: ['loggedAt' => 'asc'])]
 #[MongoODM\Index(keys: ['objectClass' => 'asc'])]
 #[MongoODM\Index(keys: ['username' => 'asc'])]
-class LogEntry extends MappedSuperclass\AbstractLogEntry
+class LogEntry extends AbstractLogEntry
 {
     /*
      * All required columns are mapped through inherited superclass

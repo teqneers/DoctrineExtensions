@@ -14,6 +14,7 @@ namespace Gedmo\Tests\Timestampable\Fixture\Document;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use Doctrine\ODM\MongoDB\Types\Type as MongoDBType;
 use Gedmo\Mapping\Annotation as Gedmo;
+use MongoDB\BSON\Timestamp;
 
 /**
  * @ODM\Document(collection="articles")
@@ -21,7 +22,11 @@ use Gedmo\Mapping\Annotation as Gedmo;
 #[ODM\Document(collection: 'articles')]
 class Article
 {
-    /** @ODM\Id */
+    /**
+     * @var string|null
+     *
+     * @ODM\Id
+     */
     #[ODM\Id]
     private $id;
 
@@ -29,18 +34,19 @@ class Article
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: MongoDBType::STRING)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @ODM\ReferenceOne(targetDocument="Gedmo\Tests\Timestampable\Fixture\Document\Type")
      */
     #[ODM\ReferenceOne(targetDocument: Type::class)]
-    private $type;
+    private ?Type $type = null;
 
     /**
-     * @var string
+     * @var int|Timestamp|null
      *
      * @ODM\Field(type="timestamp")
+     *
      * @Gedmo\Timestampable(on="create")
      */
     #[Gedmo\Timestampable(on: 'create')]
@@ -48,118 +54,117 @@ class Article
     private $created;
 
     /**
-     * @var \DateTime
-     *
      * @ODM\Field(type="date")
+     *
      * @Gedmo\Timestampable
      */
     #[Gedmo\Timestampable]
     #[ODM\Field(type: MongoDBType::DATE)]
-    private $updated;
+    private ?\DateTime $updated = null;
 
     /**
-     * @var \DateTime
-     *
      * @ODM\Field(type="date")
+     *
      * @Gedmo\Timestampable(on="change", field="type.title", value="Published")
      */
     #[Gedmo\Timestampable(on: 'change', field: 'type.title', value: 'Published')]
     #[ODM\Field(type: MongoDBType::DATE)]
-    private $published;
+    private ?\DateTime $published = null;
 
     /**
-     * @var \DateTime
-     *
      * @ODM\Field(type="date")
+     *
      * @Gedmo\Timestampable(on="change", field="isReady", value=true)
      */
     #[Gedmo\Timestampable(on: 'change', field: 'isReady', value: true)]
     #[ODM\Field(type: MongoDBType::DATE)]
-    private $ready;
+    private ?\DateTime $ready = null;
 
     /**
-     * @var bool
-     *
-     * @ODM\Field(type="boolean")
+     * @ODM\Field(type="bool")
      */
     #[ODM\Field(type: MongoDBType::BOOL)]
-    private $isReady = false;
+    private bool $isReady = false;
 
-    public function getId()
+    public function getId(): ?string
     {
         return $this->id;
     }
 
-    public function setTitle($title)
+    public function setTitle(?string $title): void
     {
         $this->title = $title;
     }
 
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }
 
+    /**
+     * @return int|Timestamp|null
+     */
     public function getCreated()
     {
         return $this->created;
     }
 
-    public function getPublished()
+    public function getPublished(): \DateTime
     {
         return $this->published;
     }
 
-    public function getUpdated()
+    public function getUpdated(): \DateTime
     {
         return $this->updated;
     }
 
-    public function setType(Type $type)
+    public function setType(Type $type): void
     {
         $this->type = $type;
     }
 
-    public function getType()
+    public function getType(): ?Type
     {
         return $this->type;
     }
 
-    public function setCreated($created)
+    /** @param int|Timestamp|null $created */
+    public function setCreated($created): void
     {
         $this->created = $created;
     }
 
-    public function setPublished(\DateTime $published)
+    public function setPublished(\DateTime $published): void
     {
         $this->published = $published;
     }
 
-    public function setUpdated(\DateTime $updated)
+    public function setUpdated(\DateTime $updated): void
     {
         $this->updated = $updated;
     }
 
-    public function setReady($ready)
+    public function setReady(?\DateTime $ready): self
     {
         $this->ready = $ready;
 
         return $this;
     }
 
-    public function getReady()
+    public function getReady(): ?\DateTime
     {
         return $this->ready;
     }
 
-    public function setIsReady($isReady)
+    public function setIsReady(bool $isReady): self
     {
         $this->isReady = $isReady;
 
         return $this;
     }
 
-    public function getIsReady()
+    public function getIsReady(): bool
     {
         return $this->isReady;
     }

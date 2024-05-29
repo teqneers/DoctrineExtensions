@@ -23,8 +23,8 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class TraitUsageTest extends BaseTestCaseORM
 {
-    public const TEST_IP = '34.234.1.10';
-    public const TARGET = UsingTrait::class;
+    private const TEST_IP = '34.234.1.10';
+    private const TARGET = UsingTrait::class;
 
     protected function setUp(): void
     {
@@ -38,10 +38,7 @@ final class TraitUsageTest extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldIpTraceUsingTrait(): void
+    public function testShouldIpTraceUsingTrait(): void
     {
         $sport = new UsingTrait();
         $sport->setTitle('Sport');
@@ -53,10 +50,7 @@ final class TraitUsageTest extends BaseTestCaseORM
         static::assertNotNull($sport->getUpdatedFromIp());
     }
 
-    /**
-     * @test
-     */
-    public function traitMethodShouldReturnObject(): void
+    public function testTraitMethodShouldReturnObject(): void
     {
         $sport = new UsingTrait();
         static::assertInstanceOf(UsingTrait::class, $sport->setCreatedFromIp('<192 class="158 3 43"></192>'));

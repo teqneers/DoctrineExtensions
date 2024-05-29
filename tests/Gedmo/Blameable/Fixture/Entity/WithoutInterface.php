@@ -34,17 +34,16 @@ class WithoutInterface
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(type="string", length=128)
      */
     #[ORM\Column(type: Types::STRING, length: 128)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Blameable(on="create")
+     *
      * @ORM\Column(type="string")
      */
     #[ORM\Column(type: Types::STRING)]
@@ -55,6 +54,7 @@ class WithoutInterface
      * @var string|null
      *
      * @ORM\Column(type="string")
+     *
      * @Gedmo\Blameable(on="update")
      */
     #[ORM\Column(type: Types::STRING)]

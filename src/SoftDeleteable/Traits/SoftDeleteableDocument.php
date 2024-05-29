@@ -9,13 +9,13 @@
 
 namespace Gedmo\SoftDeleteable\Traits;
 
-use DateTime;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use Doctrine\ODM\MongoDB\Types\Type;
 
 /**
- * A soft deletable trait you can apply to your MongoDB entities.
- * Includes default annotation mapping.
+ * Trait for soft-deletable objects.
+ *
+ * This implementation provides a mapping configuration for the Doctrine MongoDB ODM.
  *
  * @author Wesley van Opdorp <wesley.van.opdorp@freshheads.com>
  */
@@ -24,7 +24,7 @@ trait SoftDeleteableDocument
     /**
      * @ODM\Field(type="date")
      *
-     * @var DateTime|null
+     * @var \DateTime|null
      */
     #[ODM\Field(type: Type::DATE)]
     protected $deletedAt;
@@ -34,7 +34,7 @@ trait SoftDeleteableDocument
      *
      * @return self
      */
-    public function setDeletedAt(DateTime $deletedAt = null)
+    public function setDeletedAt(?\DateTime $deletedAt = null)
     {
         $this->deletedAt = $deletedAt;
 
@@ -45,7 +45,7 @@ trait SoftDeleteableDocument
      * Get the deleted at timestamp value. Will return null if
      * the entity has not been soft deleted.
      *
-     * @return DateTime|null
+     * @return \DateTime|null
      */
     public function getDeletedAt()
     {

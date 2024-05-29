@@ -22,10 +22,7 @@ final class Issue2152Test extends BaseTestCaseORM
     private const TRANSLATION = Translation::class;
     private const ENTITY = EntityWithTranslatableBoolean::class;
 
-    /**
-     * @var TranslatableListener
-     */
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -42,21 +39,18 @@ final class Issue2152Test extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldFindInheritedClassTranslations(): void
+    public function testShouldFindInheritedClassTranslations(): void
     {
-        //Arrange
-        //by default we have English
+        // Arrange
+        // by default we have English
         $title = 'Hello World';
         $isOperating = '1';
 
-        //operating in germany
+        // operating in germany
         $deTitle = 'Hallo Welt';
         $isOperatingInGermany = '0';
 
-        //but in Ukraine not operating, should fallback to default one
+        // but in Ukraine not operating, should fallback to default one
         $uaTitle = null;
         $isOperatingInUkraine = null;
 
@@ -74,11 +68,11 @@ final class Issue2152Test extends BaseTestCaseORM
         $this->em->persist($entity);
         $this->em->flush();
 
-        //Act
+        // Act
         $entityInDe = $this->findUsingQueryBuilder('de');
         $entityInUa = $this->findUsingQueryBuilder('ua');
 
-        //Assert
+        // Assert
 
         static::assertSame($deTitle, $entityInDe->getTitle());
         static::assertSame($isOperatingInGermany, $entityInDe->isOperating());
@@ -87,7 +81,7 @@ final class Issue2152Test extends BaseTestCaseORM
         static::assertSame($isOperating, $entityInUa->isOperating(), ' should fallback to default operating if null');
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::TRANSLATION,

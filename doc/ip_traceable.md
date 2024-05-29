@@ -1,4 +1,4 @@
-# IpTraceable behavior extension for Doctrine 2
+# IpTraceable behavior extension for Doctrine
 
 **IpTraceable** behavior will automate the update of IP trace
 on your Entities or Documents. It works through annotations and can update
@@ -7,7 +7,7 @@ fields on creation, update, property subset update, or even on specific property
 This is very similar to Timestampable but sets a string.
 
 Note that you need to set the IP on the IpTraceableListener (unless you use the
-Symfony2 extension which does automatically assign the current request IP).
+Symfony extension which does automatically assign the current request IP).
 
 
 Features:
@@ -17,13 +17,7 @@ Features:
 - Specific attributes and annotations for properties, and no interface required
 - Can react to specific property or relation changes to specific value
 - Can be nested with other behaviors
-- Attribute, Annotation, Yaml and Xml mapping support for extensions
-
-
-**Symfony:**
-
-- **IpTraceable** is not yet available as [Bundle](https://github.com/stof/StofDoctrineExtensionsBundle)
-for **Symfony2**, together with all other extensions
+- Attribute, Annotation and Xml mapping support for extensions
 
 This article will cover the basic installation and functionality of **IpTraceable** behavior
 
@@ -32,7 +26,6 @@ Content:
 - [Including](#including-extension) the extension
 - Entity [example](#entity-mapping)
 - Document [example](#document-mapping)
-- [Yaml](#yaml-mapping) mapping example
 - [Xml](#xml-mapping) mapping example
 - Advanced usage [examples](#advanced-examples)
 - Using [Traits](#traits)
@@ -261,47 +254,11 @@ class Article
 
 Now on update and creation these annotated fields will be automatically updated
 
-<a name="yaml-mapping"></a>
-
-## Yaml mapping example:
-
-Yaml mapped Article: **/mapping/yaml/Entity.Article.dcm.yml**
-
-```
----
-Entity\Article:
-  type: entity
-  table: articles
-  id:
-    id:
-      type: integer
-      generator:
-        strategy: AUTO
-  fields:
-    title:
-      type: string
-      length: 64
-    createdFromIp:
-      type: string
-      length: 45
-      nullable: true
-      gedmo:
-        ipTraceable:
-          on: create
-    updatedFromIp:
-      type: string
-      length: 45
-      nullable: true
-      gedmo:
-        ipTraceable:
-          on: update
-```
-
 <a name="xml-mapping"></a>
 
 ## Xml mapping example
 
-``` xml
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
                   xmlns:gedmo="http://gediminasm.org/schemas/orm/doctrine-extensions-mapping">
@@ -466,51 +423,6 @@ class Article
 }
 ```
 
-Yaml mapped Article: **/mapping/yaml/Entity.Article.dcm.yml**
-
-```
----
-Entity\Article:
-  type: entity
-  table: articles
-  id:
-    id:
-      type: integer
-      generator:
-        strategy: AUTO
-  fields:
-    title:
-      type: string
-      length: 64
-    createdFromIp:
-      type: string
-      length: 45
-      nullable: true
-      gedmo:
-        ipTraceable:
-          on: create
-    updatedFromIp:
-      type: string
-      length: 45
-      nullable: true
-      gedmo:
-        ipTraceable:
-          on: update
-    publishedFromIp:
-      type: string
-      length: 45
-      nullable: true
-      gedmo:
-        ipTraceable:
-          on: change
-          field: type.title
-          value: Published
-  manyToOne:
-    type:
-      targetEntity: Entity\Type
-      inversedBy: articles
-```
-
 Now few operations to get it all done:
 
 ```php
@@ -586,7 +498,7 @@ The Traits are very simplistic - if you use different field names it is recommen
 own Traits specific to your project. The ones provided by this bundle can be used as example.
 
 
-## Example of implementation in Symfony2
+## Example of implementation in Symfony
 
 In your Sf2 application, declare an event subscriber that automatically set IP value on IpTraceableListener.
 
@@ -659,7 +571,7 @@ class IpTraceSubscriber implements EventSubscriberInterface
 
 ### Configuration for services.xml
 
-``` xml
+```xml
 <?xml version="1.0" ?>
 
 <container xmlns="http://symfony.com/schema/dic/services"

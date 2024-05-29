@@ -13,15 +13,17 @@ namespace Gedmo\Tests\Loggable\Fixture\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Loggable\Loggable;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\Entity
+ *
  * @Gedmo\Loggable
  */
 #[ORM\Entity]
 #[Gedmo\Loggable]
-class Article
+class Article implements Loggable
 {
     /**
      * @var int|null
@@ -36,13 +38,13 @@ class Article
     private $id;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ORM\Column(name="title", type="string", length=8)
      */
     #[ORM\Column(name: 'title', type: Types::STRING, length: 8)]
     #[Gedmo\Versioned]
-    private $title;
+    private ?string $title = null;
 
     public function getId(): ?int
     {

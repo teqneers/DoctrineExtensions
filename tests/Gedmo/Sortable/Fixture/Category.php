@@ -12,46 +12,58 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Sortable\Fixture;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity
  */
+#[ORM\Entity]
 class Category
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: Types::INTEGER)]
     private $id;
 
     /**
      * @ORM\Column(type="string", length=191)
      */
-    private $name;
+    #[ORM\Column(type: Types::STRING, length: 191)]
+    private ?string $name = null;
 
     /**
+     * @var Collection<int, Item>
+     *
      * @ORM\OneToMany(targetEntity="Item", mappedBy="category")
      */
-    private $items;
+    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Item::class)]
+    private Collection $items;
 
     public function __construct()
     {
         $this->items = new ArrayCollection();
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setName($name)
+    public function setName(?string $name): void
     {
         $this->name = $name;
     }
 
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }

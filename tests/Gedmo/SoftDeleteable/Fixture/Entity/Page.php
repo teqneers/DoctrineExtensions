@@ -21,7 +21,8 @@ use Gedmo\Mapping\Annotation as Gedmo;
  * @ORM\Entity
  * @ORM\InheritanceType("JOINED")
  * @ORM\DiscriminatorColumn(name="discr", type="string")
- * @ORM\DiscriminatorMap({"page" = "Page", "mega_page" = "MegaPage"})
+ * @ORM\DiscriminatorMap({"page": "Page", "mega_page": "MegaPage"})
+ *
  * @Gedmo\SoftDeleteable(fieldName="deletedAt")
  */
 #[ORM\Entity]
@@ -44,20 +45,16 @@ class Page
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="title", type="string")
      */
     #[ORM\Column(name: 'title', type: Types::STRING)]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var \DateTime|null
-     *
      * @ORM\Column(name="deletedAt", type="datetime", nullable=true)
      */
     #[ORM\Column(name: 'deletedAt', type: Types::DATETIME_MUTABLE, nullable: true)]
-    private $deletedAt;
+    private ?\DateTime $deletedAt = null;
 
     /**
      * @var Collection<int, Module>

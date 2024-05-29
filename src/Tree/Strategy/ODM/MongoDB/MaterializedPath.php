@@ -9,6 +9,7 @@
 
 namespace Gedmo\Tree\Strategy\ODM\MongoDB;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Doctrine\Persistence\ObjectManager;
 use Gedmo\Mapping\Event\AdapterInterface;
 use Gedmo\Tool\Wrapper\AbstractWrapper;
@@ -25,7 +26,7 @@ use MongoDB\BSON\UTCDateTime;
 class MaterializedPath extends AbstractMaterializedPath
 {
     /**
-     * {@inheritdoc}
+     * @param DocumentManager $om
      */
     public function removeNode($om, $meta, $config, $node)
     {
@@ -37,7 +38,7 @@ class MaterializedPath extends AbstractMaterializedPath
             ->find($meta->getName())
             ->field($config['path'])->equals(new Regex('^'.preg_quote($wrapped->getPropertyValue($config['path'])).'.?+'))
             ->getQuery()
-            ->execute();
+            ->getIterator();
 
         foreach ($results as $node) {
             $uow->scheduleForDelete($node);
@@ -45,7 +46,7 @@ class MaterializedPath extends AbstractMaterializedPath
     }
 
     /**
-     * {@inheritdoc}
+     * @param DocumentManager $om
      */
     public function getChildren($om, $meta, $config, $originalPath)
     {
@@ -54,33 +55,30 @@ class MaterializedPath extends AbstractMaterializedPath
             ->field($config['path'])->equals(new Regex('^'.preg_quote($originalPath).'.+'))
             ->sort($config['path'], 'asc')      // This may save some calls to updateNode
             ->getQuery()
-            ->execute();
+            ->getIterator();
     }
 
     /**
-     * {@inheritdoc}
+     * @param DocumentManager $om
      */
     protected function lockTrees(ObjectManager $om, AdapterInterface $ea)
     {
         $uow = $om->getUnitOfWork();
 
-        foreach ($this->rootsOfTreesWhichNeedsLocking as $oid => $root) {
+        foreach ($this->rootsOfTreesWhichNeedsLocking as $root) {
             $meta = $om->getClassMetadata(get_class($root));
             $config = $this->listener->getConfiguration($om, $meta->getName());
             $lockTimeProp = $meta->getReflectionProperty($config['lock_time']);
             $lockTimeProp->setAccessible(true);
             $lockTimeValue = new UTCDateTime();
             $lockTimeProp->setValue($root, $lockTimeValue);
-            $changes = [
-                $config['lock_time'] => [null, $lockTimeValue],
-            ];
 
             $ea->recomputeSingleObjectChangeSet($uow, $meta, $root);
         }
     }
 
     /**
-     * {@inheritdoc}
+     * @param DocumentManager $om
      */
     protected function releaseTreeLocks(ObjectManager $om, AdapterInterface $ea)
     {
@@ -93,9 +91,6 @@ class MaterializedPath extends AbstractMaterializedPath
             $lockTimeProp->setAccessible(true);
             $lockTimeValue = null;
             $lockTimeProp->setValue($root, $lockTimeValue);
-            $changes = [
-                $config['lock_time'] => [null, null],
-            ];
 
             $ea->recomputeSingleObjectChangeSet($uow, $meta, $root);
 

@@ -15,9 +15,14 @@ use Gedmo\Mapping\Annotation\Timestampable as Tmsp;
 
 class Timestampable
 {
+    /**
+     * @var int
+     */
     private $id;
 
     /**
+     * @var \DateTime
+     *
      * @Tmsp(on="create")
      */
     private $created;

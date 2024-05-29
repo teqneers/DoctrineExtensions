@@ -23,7 +23,7 @@ use Gedmo\Timestampable\TimestampableListener;
  */
 final class TraitUsageTest extends BaseTestCaseORM
 {
-    public const TARGET = UsingTrait::class;
+    private const TARGET = UsingTrait::class;
 
     protected function setUp(): void
     {
@@ -35,10 +35,7 @@ final class TraitUsageTest extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldTimestampUsingTrait()
+    public function testShouldTimestampUsingTrait(): void
     {
         $sport = new UsingTrait();
         $sport->setTitle('Sport');
@@ -50,17 +47,14 @@ final class TraitUsageTest extends BaseTestCaseORM
         static::assertNotNull($sport->getUpdatedAt());
     }
 
-    /**
-     * @test
-     */
-    public function traitMethodthShouldReturnObject()
+    public function testTraitMethodthShouldReturnObject(): void
     {
         $sport = new UsingTrait();
         static::assertInstanceOf(UsingTrait::class, $sport->setCreatedAt(new \DateTime()));
         static::assertInstanceOf(UsingTrait::class, $sport->setUpdatedAt(new \DateTime()));
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::TARGET,

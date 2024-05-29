@@ -11,46 +11,55 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Tree\Fixture;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity
  */
+#[ORM\Entity]
 class Comment
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: Types::INTEGER)]
     private $id;
 
     /**
      * @ORM\Column(name="message", type="text")
      */
-    private $message;
+    #[ORM\Column(name: 'message', type: Types::TEXT)]
+    private ?string $message = null;
 
     /**
      * @ORM\ManyToOne(targetEntity="Article", inversedBy="comments")
      */
-    private $article;
+    #[ORM\ManyToOne(targetEntity: Article::class, inversedBy: 'comments')]
+    private ?Article $article = null;
 
-    public function setArticle($article)
+    public function setArticle(?Article $article): void
     {
         $this->article = $article;
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setMessage($message)
+    public function setMessage(?string $message): void
     {
         $this->message = $message;
     }
 
-    public function getMessage()
+    public function getMessage(): ?string
     {
         return $this->message;
     }

@@ -14,6 +14,7 @@ namespace Gedmo\Tests\Sluggable\Fixture\Handler;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Gedmo\Sluggable\Handler\InversedRelativeSlugHandler;
 use Gedmo\Sluggable\Sluggable;
 
 /**
@@ -35,33 +36,32 @@ class Article implements Sluggable
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="title", type="string", length=64)
      */
     #[ORM\Column(name: 'title', type: Types::STRING, length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="code", type="string", length=16)
      */
     #[ORM\Column(name: 'code', type: Types::STRING, length: 16)]
-    private $code;
+    private ?string $code = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(handlers={
-     *      @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\InversedRelativeSlugHandler", options={
-     *          @Gedmo\SlugHandlerOption(name="relationClass", value="Gedmo\Tests\Sluggable\Fixture\Handler\ArticleRelativeSlug"),
-     *          @Gedmo\SlugHandlerOption(name="mappedBy", value="article"),
-     *          @Gedmo\SlugHandlerOption(name="inverseSlugField", value="slug")
-     *      })
+     *     @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\InversedRelativeSlugHandler", options={
+     *         @Gedmo\SlugHandlerOption(name="relationClass", value="Gedmo\Tests\Sluggable\Fixture\Handler\ArticleRelativeSlug"),
+     *         @Gedmo\SlugHandlerOption(name="mappedBy", value="article"),
+     *         @Gedmo\SlugHandlerOption(name="inverseSlugField", value="slug")
+     *     })
      * }, separator="-", updatable=true, fields={"title", "code"})
+     *
      * @ORM\Column(name="slug", type="string", length=64, unique=true)
      */
+    #[Gedmo\Slug(separator: '-', updatable: true, fields: ['title', 'code'])]
+    #[Gedmo\SlugHandler(class: InversedRelativeSlugHandler::class, options: ['relationClass' => ArticleRelativeSlug::class, 'mappedBy' => 'article', 'inverseSlugField' => 'slug'])]
     #[ORM\Column(name: 'slug', type: Types::STRING, length: 64, unique: true)]
     private $slug;
 
@@ -80,7 +80,7 @@ class Article implements Sluggable
         return $this->title;
     }
 
-    public function setCode(?string $code)
+    public function setCode(?string $code): void
     {
         $this->code = $code;
     }

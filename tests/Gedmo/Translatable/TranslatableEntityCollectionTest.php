@@ -25,11 +25,11 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class TranslatableEntityCollectionTest extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const COMMENT = Comment::class;
-    public const TRANSLATION = Translation::class;
+    private const ARTICLE = Article::class;
+    private const COMMENT = Comment::class;
+    private const TRANSLATION = Translation::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -41,21 +41,10 @@ final class TranslatableEntityCollectionTest extends BaseTestCaseORM
         $this->translatableListener->setDefaultLocale('en_us');
         $evm->addEventSubscriber($this->translatableListener);
 
-        $conn = [
-            'driver' => 'pdo_mysql',
-            'host' => '127.0.0.1',
-            'dbname' => 'test',
-            'user' => 'root',
-            'password' => 'nimda',
-        ];
-        //$this->getMockCustomEntityManager($conn, $evm);
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldEnsureSolvedIssue234()
+    public function testShouldEnsureSolvedIssue234(): void
     {
         $this->translatableListener->setTranslatableLocale('de');
         $this->translatableListener->setDefaultLocale('en');
@@ -82,10 +71,7 @@ final class TranslatableEntityCollectionTest extends BaseTestCaseORM
         static::assertSame('my article en', $trans['en']['title']);
     }
 
-    /**
-     * @test
-     */
-    public function shouldPersistMultipleTranslations()
+    public function testShouldPersistMultipleTranslations(): void
     {
         $this->populate();
         $repo = $this->em->getRepository(self::TRANSLATION);
@@ -107,10 +93,7 @@ final class TranslatableEntityCollectionTest extends BaseTestCaseORM
         static::assertSame('content ru', $translations['ru_ru']['content']);
     }
 
-    /**
-     * @test
-     */
-    public function shouldUpdateTranslation()
+    public function testShouldUpdateTranslation(): void
     {
         $this->populate();
         $repo = $this->em->getRepository(self::TRANSLATION);
@@ -131,10 +114,7 @@ final class TranslatableEntityCollectionTest extends BaseTestCaseORM
         static::assertSame('content ru change', $translations['ru_ru']['content']);
     }
 
-    /**
-     * @test
-     */
-    public function shouldUpdateMultipleTranslations()
+    public function testShouldUpdateMultipleTranslations(): void
     {
         $this->populate();
         $repo = $this->em->getRepository(self::TRANSLATION);
@@ -174,7 +154,7 @@ final class TranslatableEntityCollectionTest extends BaseTestCaseORM
         static::assertSame('content lt', $translations['lt_lt']['content']);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,

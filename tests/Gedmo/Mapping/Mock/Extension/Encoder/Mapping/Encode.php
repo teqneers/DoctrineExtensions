@@ -11,13 +11,29 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Mapping\Mock\Extension\Encoder\Mapping;
 
-use Doctrine\Common\Annotations\Annotation;
+use Gedmo\Mapping\Annotation\Annotation as GedmoAnnotation;
 
 /**
  * @Annotation
+ *
+ * @NamedArgumentConstructor
  */
-final class Encode extends Annotation
+#[\Attribute(\Attribute::TARGET_PROPERTY)]
+final class Encode implements GedmoAnnotation
 {
+    /**
+     * @var string
+     */
     public $type = 'md5';
+
+    /**
+     * @var string|null
+     */
     public $secret;
+
+    public function __construct(string $type = 'md5', ?string $secret = null)
+    {
+        $this->type = $type;
+        $this->secret = $secret;
+    }
 }

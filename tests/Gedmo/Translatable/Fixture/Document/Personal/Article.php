@@ -11,53 +11,67 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Translatable\Fixture\Document\Personal;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoODM;
 use Doctrine\ODM\MongoDB\Types\Type;
 use Gedmo\Mapping\Annotation as Gedmo;
-use Gedmo\Tests\Translatable\Fixture\Personal\PersonalArticleTranslation;
 
 /**
  * @Gedmo\TranslationEntity(class="Gedmo\Tests\Translatable\Fixture\Document\Personal\ArticleTranslation")
+ *
  * @MongoODM\Document(collection="articles")
  */
 #[Gedmo\TranslationEntity(class: ArticleTranslation::class)]
 #[MongoODM\Document(collection: 'articles')]
 class Article
 {
-    /** @MongoODM\Id */
+    /**
+     * @var string|null
+     *
+     * @MongoODM\Id
+     */
     #[MongoODM\Id]
     private $id;
 
     /**
      * @Gedmo\Translatable
+     *
      * @MongoODM\Field(type="string")
      */
     #[Gedmo\Translatable]
     #[MongoODM\Field(type: Type::STRING)]
-    private $title;
+    private ?string $title = null;
 
     /**
+     * @var Collection<int, ArticleTranslation>
+     *
      * @MongoODM\ReferenceMany(targetDocument="Gedmo\Tests\Translatable\Fixture\Document\Personal\ArticleTranslation", mappedBy="object")
      */
     #[MongoODM\ReferenceMany(targetDocument: ArticleTranslation::class, mappedBy: 'object')]
     private $translations;
 
-    /**
-     * @var string|null
-     */
-    private $code;
+    private ?string $code = null;
 
     /**
      * @var string
      */
     private $slug;
 
-    public function getTranslations()
+    public function __construct()
+    {
+        $this->translations = new ArrayCollection();
+    }
+
+    /**
+     * @return Collection<int, ArticleTranslation>
+     */
+    public function getTranslations(): Collection
     {
         return $this->translations;
     }
 
-    public function addTranslation(PersonalArticleTranslation $t)
+    public function addTranslation(ArticleTranslation $t): void
     {
         if (!$this->translations->contains($t)) {
             $this->translations[] = $t;
@@ -65,32 +79,32 @@ class Article
         }
     }
 
-    public function getId()
+    public function getId(): ?string
     {
         return $this->id;
     }
 
-    public function setTitle($title)
+    public function setTitle(?string $title): void
     {
         $this->title = $title;
     }
 
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    public function setCode($code)
+    public function setCode(?string $code): void
     {
         $this->code = $code;
     }
 
-    public function getCode()
+    public function getCode(): ?string
     {
         return $this->code;
     }
 
-    public function getSlug()
+    public function getSlug(): string
     {
         return $this->slug;
     }

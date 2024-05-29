@@ -17,6 +17,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\MappedSuperclass
+ *
  * @Gedmo\SoftDeleteable(fieldName="deletedAt")
  */
 #[ORM\MappedSuperclass]
@@ -36,12 +37,10 @@ class MappedSuperclass
     private $id;
 
     /**
-     * @var \DateTime|null
-     *
      * @ORM\Column(name="deletedAt", type="datetime", nullable=true)
      */
     #[ORM\Column(name: 'deletedAt', type: Types::DATETIME_MUTABLE, nullable: true)]
-    private $deletedAt;
+    private ?\DateTime $deletedAt = null;
 
     public function getId(): ?int
     {

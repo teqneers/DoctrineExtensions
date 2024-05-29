@@ -14,6 +14,7 @@ namespace Gedmo\Tests\Sluggable\Fixture\Document\Handler;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use Doctrine\ODM\MongoDB\Types\Type;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Gedmo\Sluggable\Handler\InversedRelativeSlugHandler;
 
 /**
  * @ODM\Document(collection="articles")
@@ -30,33 +31,32 @@ class Article
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
-    private $code;
+    private ?string $code = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(handlers={
-     *      @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\InversedRelativeSlugHandler", options={
-     *          @Gedmo\SlugHandlerOption(name="relationClass", value="Gedmo\Tests\Sluggable\Fixture\Document\Handler\RelativeSlug"),
-     *          @Gedmo\SlugHandlerOption(name="mappedBy", value="article"),
-     *          @Gedmo\SlugHandlerOption(name="inverseSlugField", value="alias")
-     *      })
+     *     @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\InversedRelativeSlugHandler", options={
+     *         @Gedmo\SlugHandlerOption(name="relationClass", value="Gedmo\Tests\Sluggable\Fixture\Document\Handler\RelativeSlug"),
+     *         @Gedmo\SlugHandlerOption(name="mappedBy", value="article"),
+     *         @Gedmo\SlugHandlerOption(name="inverseSlugField", value="alias")
+     *     })
      * }, separator="-", updatable=true, fields={"title", "code"})
+     *
      * @ODM\Field(type="string")
      */
+    #[Gedmo\Slug(separator: '-', updatable: true, fields: ['title', 'code'])]
+    #[Gedmo\SlugHandler(class: InversedRelativeSlugHandler::class, options: ['relationClass' => RelativeSlug::class, 'mappedBy' => 'article', 'inverseSlugField' => 'alias'])]
     #[ODM\Field(type: Type::STRING)]
     private $slug;
 

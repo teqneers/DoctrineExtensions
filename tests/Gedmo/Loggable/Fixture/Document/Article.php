@@ -13,40 +13,43 @@ namespace Gedmo\Tests\Loggable\Fixture\Document;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use Doctrine\ODM\MongoDB\Types\Type;
+use Gedmo\Loggable\Loggable;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ODM\Document(collection="articles")
+ *
  * @Gedmo\Loggable
  */
 #[ODM\Document(collection: 'articles')]
 #[Gedmo\Loggable]
-class Article
+class Article implements Loggable
 {
     /**
      * @var string|null
+     *
      * @ODM\Id
      */
     #[ODM\Id]
     private $id;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
     #[Gedmo\Versioned]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var Author|null
      * @ODM\EmbedOne(targetDocument="Gedmo\Tests\Loggable\Fixture\Document\Author")
+     *
      * @Gedmo\Versioned
      */
     #[ODM\EmbedOne(targetDocument: Author::class)]
     #[Gedmo\Versioned]
-    private $author;
+    private ?Author $author = null;
 
     public function __toString()
     {

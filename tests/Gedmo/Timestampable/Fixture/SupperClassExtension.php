@@ -22,18 +22,19 @@ class SupperClassExtension extends MappedSupperClass
 {
     /**
      * @ORM\Column(length=128)
+     *
      * @Gedmo\Translatable
      */
     #[ORM\Column(length: 128)]
     #[Gedmo\Translatable]
-    private $title;
+    private ?string $title = null;
 
-    public function setTitle($title)
+    public function setTitle(?string $title): void
     {
         $this->title = $title;
     }
 
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }

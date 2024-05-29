@@ -11,51 +11,60 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Tree\Fixture\Transport;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity
  */
+#[ORM\Entity]
 class Engine
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: Types::INTEGER)]
     private $id;
 
     /**
      * @ORM\Column(length=32)
      */
-    private $type;
+    #[ORM\Column(length: 32)]
+    private ?string $type = null;
 
     /**
      * @ORM\Column(type="integer")
      */
-    private $valves;
+    #[ORM\Column(type: Types::INTEGER)]
+    private ?int $valves = null;
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setType($type)
+    public function setType(?string $type): void
     {
         $this->type = $type;
     }
 
-    public function getType()
+    public function getType(): ?string
     {
         return $this->type;
     }
 
-    public function setValves($valves)
+    public function setValves(?int $valves): void
     {
         $this->valves = $valves;
     }
 
-    public function getValves()
+    public function getValves(): ?int
     {
         return $this->valves;
     }

@@ -23,7 +23,7 @@ use Gedmo\Tree\TreeListener;
  */
 final class InMemoryUpdatesTest extends BaseTestCaseORM
 {
-    public const CATEGORY = Category::class;
+    private const CATEGORY = Category::class;
 
     protected function setUp(): void
     {
@@ -32,10 +32,10 @@ final class InMemoryUpdatesTest extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new TreeListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testInMemoryTreeInserts()
+    public function testInMemoryTreeInserts(): void
     {
         $meta = $this->em->getClassMetadata(self::CATEGORY);
         $repo = $this->em->getRepository(self::CATEGORY);
@@ -94,7 +94,7 @@ final class InMemoryUpdatesTest extends BaseTestCaseORM
         print "\n\n";*/
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::CATEGORY,

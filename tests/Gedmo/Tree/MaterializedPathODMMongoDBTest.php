@@ -28,7 +28,14 @@ final class MaterializedPathODMMongoDBTest extends BaseTestCaseMongoODM
 {
     private const CATEGORY = Category::class;
 
+    /**
+     * @var array<string, mixed>
+     */
     protected $config;
+
+    /**
+     * @var TreeListener
+     */
     protected $listener;
 
     protected function setUp(): void
@@ -40,16 +47,13 @@ final class MaterializedPathODMMongoDBTest extends BaseTestCaseMongoODM
         $evm = new EventManager();
         $evm->addEventSubscriber($this->listener);
 
-        $this->getMockDocumentManager($evm);
+        $this->getDefaultDocumentManager($evm);
 
         $meta = $this->dm->getClassMetadata(self::CATEGORY);
         $this->config = $this->listener->getConfiguration($this->dm, $meta->getName());
     }
 
-    /**
-     * @test
-     */
-    public function insertUpdateAndRemove()
+    public function testInsertUpdateAndRemove(): void
     {
         // Insert
         $category = $this->createCategory();
@@ -107,7 +111,7 @@ final class MaterializedPathODMMongoDBTest extends BaseTestCaseMongoODM
         $this->dm->remove($category2);
         $this->dm->flush();
 
-        $result = $this->dm->createQueryBuilder()->find(self::CATEGORY)->getQuery()->execute();
+        $result = $this->dm->createQueryBuilder()->find(self::CATEGORY)->getQuery()->getIterator();
 
         static::assertInstanceOf(Iterator::class, $result);
 
@@ -119,10 +123,7 @@ final class MaterializedPathODMMongoDBTest extends BaseTestCaseMongoODM
         static::assertSame(1, $firstResult->getLevel());
     }
 
-    /**
-     * @test
-     */
-    public function useOfSeparatorInPathSourceShouldThrowAnException()
+    public function testUseOfSeparatorInPathSourceShouldThrowAnException(): void
     {
         $this->expectException(RuntimeException::class);
 
@@ -133,14 +134,17 @@ final class MaterializedPathODMMongoDBTest extends BaseTestCaseMongoODM
         $this->dm->flush();
     }
 
-    public function createCategory()
+    private function createCategory(): Category
     {
         $class = self::CATEGORY;
 
         return new $class();
     }
 
-    public function generatePath(array $sources)
+    /**
+     * @param array<int|string, int|string|null> $sources
+     */
+    private function generatePath(array $sources): string
     {
         $path = '';
 

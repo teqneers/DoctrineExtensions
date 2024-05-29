@@ -13,7 +13,9 @@ namespace Gedmo\Tests\Mapping\Xml;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\EventManager;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\ORM\Mapping\Driver\XmlDriver;
 use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Gedmo\Tests\Mapping\Fixture\Xml\MaterializedPathTree;
@@ -28,22 +30,19 @@ use Gedmo\Tree\TreeListener;
  */
 final class MaterializedPathTreeMappingTest extends BaseTestCaseOM
 {
-    /**
-     * @var \Doctrine\ORM\EntityManager
-     */
-    private $em;
+    private EntityManager $em;
 
-    /**
-     * @var TreeListener
-     */
-    private $tree;
+    private TreeListener $tree;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $reader = new AnnotationReader();
-        $annotationDriver = new AnnotationDriver($reader);
+        if (PHP_VERSION_ID >= 80000) {
+            $annotationDriver = new AttributeDriver([]);
+        } else {
+            $annotationDriver = new AnnotationDriver(new AnnotationReader());
+        }
 
         $xmlDriver = new XmlDriver(__DIR__.'/../Driver/Xml');
 
@@ -56,12 +55,12 @@ final class MaterializedPathTreeMappingTest extends BaseTestCaseOM
         $this->evm = new EventManager();
         $this->evm->addEventSubscriber($this->tree);
 
-        $this->em = $this->getMockSqliteEntityManager([
+        $this->em = $this->getDefaultMockSqliteEntityManager([
             MaterializedPathTree::class,
         ], $chain);
     }
 
-    public function testTreeMetadata()
+    public function testTreeMetadata(): void
     {
         $meta = $this->em->getClassMetadata(MaterializedPathTree::class);
         $config = $this->tree->getConfiguration($this->em, $meta->getName());

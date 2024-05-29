@@ -23,7 +23,7 @@ use Gedmo\Tests\Tool\BaseTestCaseMongoODM;
  */
 final class SortableDocumentTest extends BaseTestCaseMongoODM
 {
-    public const ARTICLE = Article::class;
+    private const ARTICLE = Article::class;
 
     protected function setUp(): void
     {
@@ -35,7 +35,7 @@ final class SortableDocumentTest extends BaseTestCaseMongoODM
         $this->populate();
     }
 
-    public function testInitialPositions()
+    public function testInitialPositions(): void
     {
         $repo = $this->dm->getRepository(self::ARTICLE);
         for ($i = 0; $i <= 4; ++$i) {
@@ -44,7 +44,7 @@ final class SortableDocumentTest extends BaseTestCaseMongoODM
         }
     }
 
-    public function testMovePositions()
+    public function testMovePositions(): void
     {
         $repo = $this->dm->getRepository(self::ARTICLE);
 
@@ -58,7 +58,7 @@ final class SortableDocumentTest extends BaseTestCaseMongoODM
         }
     }
 
-    public function testMoveLastPositions()
+    public function testMoveLastPositions(): void
     {
         $repo = $this->dm->getRepository(self::ARTICLE);
 
@@ -74,7 +74,7 @@ final class SortableDocumentTest extends BaseTestCaseMongoODM
         static::assertSame('article0', $article->getTitle());
     }
 
-    public function testDeletePositions()
+    public function testDeletePositions(): void
     {
         $repo = $this->dm->getRepository(self::ARTICLE);
 

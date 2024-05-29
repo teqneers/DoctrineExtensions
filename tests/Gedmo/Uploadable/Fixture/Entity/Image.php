@@ -11,73 +11,92 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Uploadable\Fixture\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\Entity
+ *
  * @Gedmo\Uploadable(pathMethod="getPath")
  */
+#[ORM\Entity]
+#[Gedmo\Uploadable(pathMethod: 'getPath')]
 class Image
 {
     /**
-     * @ORM\Column(name="id", type="integer")
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
+     * @ORM\Column(type="integer")
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[ORM\Column(type: Types::INTEGER)]
     private $id;
 
     /**
      * @ORM\Column(name="title", type="string")
      */
-    private $title;
+    #[ORM\Column(name: 'title', type: Types::STRING)]
+    private ?string $title = null;
 
     /**
      * @ORM\Column(name="path", type="string", nullable=true)
+     *
      * @Gedmo\UploadableFilePath
      */
-    private $filePath;
+    #[ORM\Column(name: 'path', type: Types::STRING, nullable: true)]
+    #[Gedmo\UploadableFilePath]
+    private ?string $filePath = null;
 
     /**
      * @ORM\Column(name="size", type="decimal", nullable=true)
+     *
      * @Gedmo\UploadableFileSize
      */
-    private $size;
+    #[ORM\Column(name: 'size', type: Types::DECIMAL, nullable: true)]
+    #[Gedmo\UploadableFileSize]
+    private ?string $size = null;
 
     /**
      * @ORM\Column(name="mime_type", type="string", nullable=true)
+     *
      * @Gedmo\UploadableFileMimeType
      */
-    private $mime;
+    #[ORM\Column(name: 'mime_type', type: Types::STRING, nullable: true)]
+    #[Gedmo\UploadableFileMimeType]
+    private ?string $mime = null;
 
-    private $useBasePath = false;
+    private bool $useBasePath = false;
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setTitle($title)
+    public function setTitle(?string $title): void
     {
         $this->title = $title;
     }
 
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    public function setFilePath($filePath)
+    public function setFilePath(?string $filePath): void
     {
         $this->filePath = $filePath;
     }
 
-    public function getFilePath()
+    public function getFilePath(): ?string
     {
         return $this->filePath;
     }
 
-    public function getPath($basePath = null)
+    public function getPath(?string $basePath = null): string
     {
         if ($this->useBasePath) {
             return $basePath.'/abc/def';
@@ -86,27 +105,27 @@ class Image
         return TESTS_TEMP_DIR.'/uploadable';
     }
 
-    public function setMime($mime)
+    public function setMime(?string $mime): void
     {
         $this->mime = $mime;
     }
 
-    public function getMime()
+    public function getMime(): ?string
     {
         return $this->mime;
     }
 
-    public function setSize($size)
+    public function setSize(?string $size): void
     {
         $this->size = $size;
     }
 
-    public function getSize()
+    public function getSize(): ?string
     {
         return $this->size;
     }
 
-    public function setUseBasePath($useBasePath)
+    public function setUseBasePath(bool $useBasePath): void
     {
         $this->useBasePath = $useBasePath;
     }

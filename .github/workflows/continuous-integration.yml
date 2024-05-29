@@ -11,7 +11,7 @@ env:
 
 jobs:
   phpunit:
-    name: "PHPUnit ${{ matrix.php-version }} (${{ matrix.deps }})${{ matrix.dbal-version && format(' - DBAL {0}', matrix.dbal-version) || '' }}"
+    name: "PHPUnit ${{ matrix.php-version }} (${{ matrix.deps }})"
     runs-on: "ubuntu-20.04"
 
     services:
@@ -23,28 +23,22 @@ jobs:
     strategy:
       matrix:
         php-version:
-          - "7.2"
-          - "7.3"
           - "7.4"
           - "8.0"
           - "8.1"
+          - "8.2"
+          - "8.3"
         deps:
           - "highest"
-        dbal-version:
-          - ""
         include:
           - deps: "lowest"
-            php-version: "7.2"
+            php-version: "7.4"
           - deps: "highest"
-            php-version: "8.0"
-            dbal-version: "^2.13.1"
-          - deps: "highest"
-            php-version: "8.0"
-            dbal-version: "^3.2"
+            php-version: "8.1"
 
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v2"
+        uses: "actions/checkout@v4"
         with:
           fetch-depth: 2
 
@@ -55,27 +49,23 @@ jobs:
           extensions: mongodb
           coverage: "pcov"
 
-      - name: "Restrict DBAL version"
-        if: "${{ matrix.dbal-version }}"
-        run: "composer require --dev --no-update doctrine/dbal:${{ matrix.dbal-version }}"
-
-      # Remove this when laminas/laminas-code 4.5 is released
-      - name: "Use dev stability"
-        if: "${{ matrix.php-version == '8.1' }}"
-        run: composer config minimum-stability dev
+      # Remove PHP-CS-Fixer to avoid conflicting dependency ranges (i.e. doctrine/annotations)
+      - name: "Remove PHP-CS-Fixer"
+        run: "composer remove --dev --no-update friendsofphp/php-cs-fixer"
 
       - name: "Install dependencies with Composer"
-        uses: "ramsey/composer-install@v1"
+        uses: "ramsey/composer-install@v2"
         with:
           dependency-versions: "${{ matrix.deps }}"
 
       - name: "Run PHPUnit"
-        run: "bin/phpunit -c tests --coverage-clover=coverage.xml"
+        run: "vendor/bin/phpunit -c tests --coverage-clover coverage.xml"
 
-      - name: "Send coverage to Codecov"
-        uses: "codecov/codecov-action@v2"
+      - name: "Upload coverage file"
+        uses: "actions/upload-artifact@v4"
         with:
-          file: "coverage.xml"
+          name: "${{ github.job }}-${{ matrix.php-version }}-${{ matrix.deps }}-coverage"
+          path: "coverage.xml"
 
   lint-doctrine-xml-schema:
     name: Lint Doctrine XML schemas
@@ -84,16 +74,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: "Install PHP"
         uses: "shivammathur/setup-php@v2"
         with:
-          php-version: "8.0"
+          php-version: "8.2"
           extensions: mongodb
 
       - name: "Install dependencies with Composer"
-        uses: "ramsey/composer-install@v1"
+        uses: "ramsey/composer-install@v2"
         with:
           dependency-versions: "highest"
 
@@ -102,3 +92,25 @@ jobs:
 
       - name: Lint xml files
         run: make lint-doctrine-xml-schema
+
+  upload_coverage:
+    name: "Upload coverage to Codecov"
+    runs-on: "ubuntu-22.04"
+    needs:
+      - "phpunit"
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 2
+
+      - name: "Download coverage files"
+        uses: "actions/download-artifact@v4"
+        with:
+          path: "reports"
+
+      - name: "Upload to Codecov"
+        uses: "codecov/codecov-action@v4"
+        with:
+          directory: reports

@@ -1,4 +1,4 @@
-# SoftDeleteable behavior extension for Doctrine 2
+# SoftDeleteable behavior extension for Doctrine
 
 **SoftDeleteable** behavior allows to "soft delete" objects, filtering them
 at SELECT time by marking them deleted as with a timestamp, but not explicitly removing them from the database.
@@ -9,7 +9,7 @@ Features:
 - All SELECT queries will be filtered, not matter from where they are executed (Repositories, DQL SELECT queries, etc).
 - For now, it works only with the ORM
 - Can be nested with other behaviors
-- Attribute, Annotation, Yaml and Xml mapping support for extensions
+- Attribute, Annotation and Xml mapping support for extensions
 - Support for 'timeAware' option: When creating an entity set a date of deletion in the future and never worry about cleaning up at expiration time.
 - Support for 'hardDelete' option: When deleting a second time it allows to disable hard delete.
 
@@ -17,7 +17,6 @@ Content:
 
 - [Including](#including-extension) the extension
 - Entity [example](#entity-mapping)
-- [Yaml](#yaml-mapping) mapping example
 - [Xml](#xml-mapping) mapping example
 - Usage [examples](#usage)
 - Using [Traits](#traits)
@@ -166,40 +165,11 @@ class Article
 }
 ```
 
-<a name="yaml-mapping"></a>
-
-## Yaml mapping example:
-
-Yaml mapped Article: **/mapping/yaml/Entity.Article.dcm.yml**
-
-```
----
-Entity\Article:
-  type: entity
-  table: articles
-  gedmo:
-    soft_deleteable:
-      field_name: deletedAt
-      time_aware: false
-      hard_delete: true
-  id:
-    id:
-      type: integer
-      generator:
-        strategy: AUTO
-  fields:
-    title:
-      type: string
-    deletedAt:
-      type: date
-      nullable: true
-```
-
 <a name="xml-mapping"></a>
 
 ## Xml mapping example
 
-``` xml
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
                   xmlns:gedmo="http://gediminasm.org/schemas/orm/doctrine-extensions-mapping">

@@ -17,6 +17,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ODM\Document(collection="users")
+ *
  * @Gedmo\SoftDeleteable(fieldName="deletedAt", timeAware=true)
  */
 #[ODM\Document(collection: 'users')]
@@ -39,12 +40,10 @@ class UserTimeAware
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
-    private $username;
+    private ?string $username = null;
 
     public function setDeletedAt(\DateTime $deletedAt): self
     {

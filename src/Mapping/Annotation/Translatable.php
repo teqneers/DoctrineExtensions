@@ -9,34 +9,49 @@
 
 namespace Gedmo\Mapping\Annotation;
 
-use Attribute;
 use Doctrine\Common\Annotations\Annotation;
+use Doctrine\Deprecations\Deprecation;
 use Gedmo\Mapping\Annotation\Annotation as GedmoAnnotation;
 
 /**
  * Translatable annotation for Translatable behavioral extension
  *
  * @Annotation
+ *
  * @NamedArgumentConstructor
+ *
  * @Target("PROPERTY")
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_PROPERTY)]
 final class Translatable implements GedmoAnnotation
 {
+    use ForwardCompatibilityTrait;
+
     /** @var bool|null */
     public $fallback;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data = [], ?bool $fallback = null)
     {
         if ([] !== $data) {
-            @trigger_error(sprintf(
+            Deprecation::trigger(
+                'gedmo/doctrine-extensions',
+                'https://github.com/doctrine-extensions/DoctrineExtensions/pull/2253',
                 'Passing an array as first argument to "%s()" is deprecated. Use named arguments instead.',
                 __METHOD__
-            ), E_USER_DEPRECATED);
+            );
+
+            $args = func_get_args();
+
+            $this->fallback = $this->getAttributeValue($data, 'fallback', $args, 1, $fallback);
+
+            return;
         }
 
-        $this->fallback = $data['fallback'] ?? $fallback;
+        $this->fallback = $fallback;
     }
 }

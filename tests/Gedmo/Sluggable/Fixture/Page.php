@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Sluggable\Fixture;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -35,19 +36,19 @@ class Page
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(type="string", length=191)
      */
     #[ORM\Column(type: Types::STRING, length: 191)]
-    private $content;
+    private ?string $content = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(style="camel", separator="_", fields={"content"})
+     *
      * @ORM\Column(type="string", length=128)
      */
+    #[Gedmo\Slug(style: 'camel', separator: '_', fields: ['content'])]
     #[ORM\Column(type: Types::STRING, length: 128)]
     private $slug;
 
@@ -58,6 +59,11 @@ class Page
      */
     #[ORM\OneToMany(targetEntity: TranslatableArticle::class, mappedBy: 'page')]
     private $articles;
+
+    public function __construct()
+    {
+        $this->articles = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {

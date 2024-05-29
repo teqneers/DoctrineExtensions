@@ -12,84 +12,77 @@ declare(strict_types=1);
 namespace Gedmo\Tests\ReferenceIntegrity\Fixture\Document\OnePull;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
+use Doctrine\ODM\MongoDB\Types\Type as MongoDBType;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ODM\Document(collection="types")
  */
+#[ODM\Document(collection: 'types')]
 class Type
 {
     /**
-     * @ODM\ReferenceOne(targetDocument="Gedmo\Tests\ReferenceIntegrity\Fixture\Document\OnePull\Article", mappedBy="types")
-     * @Gedmo\ReferenceIntegrity("pull")
+     * @var Article|null
      *
-     * @var Article
+     * @ODM\ReferenceOne(targetDocument="Gedmo\Tests\ReferenceIntegrity\Fixture\Document\OnePull\Article", mappedBy="types")
+     *
+     * @Gedmo\ReferenceIntegrity("pull")
      */
+    #[ODM\ReferenceOne(targetDocument: Article::class, mappedBy: 'types')]
+    #[Gedmo\ReferenceIntegrity(value: 'pull')]
     protected $article;
+
     /**
+     * @var string|null
+     *
      * @ODM\Id
      */
+    #[ODM\Id]
     private $id;
 
     /**
      * @ODM\Field(type="string")
      */
-    private $title;
+    #[ODM\Field(type: MongoDBType::STRING)]
+    private ?string $title = null;
 
     /**
      * @ODM\Field(type="string")
      */
-    private $identifier;
+    #[ODM\Field(type: MongoDBType::STRING)]
+    private ?string $identifier = null;
 
-    /**
-     * @return mixed
-     */
-    public function getId()
+    public function getId(): ?string
     {
         return $this->id;
     }
 
-    /**
-     * @param string $title
-     */
-    public function setTitle($title)
+    public function setTitle(?string $title): void
     {
         $this->title = $title;
     }
 
-    /**
-     * @return string
-     */
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    /**
-     * @param string $identifier
-     */
-    public function setIdentifier($identifier)
+    public function setIdentifier(?string $identifier): void
     {
         $this->identifier = $identifier;
     }
 
-    /**
-     * @return string
-     */
-    public function getIdentifier()
+    public function getIdentifier(): ?string
     {
         return $this->identifier;
     }
 
-    public function setArticle(Article $article)
+    public function setArticle(?Article $article): void
     {
         $this->article = $article;
     }
 
-    /**
-     * @return Article $article
-     */
-    public function getArticle()
+    public function getArticle(): ?Article
     {
         return $this->article;
     }

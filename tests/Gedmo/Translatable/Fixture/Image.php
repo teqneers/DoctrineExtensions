@@ -22,18 +22,19 @@ class Image extends File
 {
     /**
      * @Gedmo\Translatable
+     *
      * @ORM\Column(length=128)
      */
     #[Gedmo\Translatable]
     #[ORM\Column(length: 128)]
-    private $mime;
+    private ?string $mime = null;
 
-    public function setMime($mime)
+    public function setMime(?string $mime): void
     {
         $this->mime = $mime;
     }
 
-    public function getMime()
+    public function getMime(): ?string
     {
         return $this->mime;
     }

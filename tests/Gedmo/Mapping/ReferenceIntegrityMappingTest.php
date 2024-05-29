@@ -27,15 +27,9 @@ use Gedmo\Tests\Tool\BaseTestCaseOM;
  */
 final class ReferenceIntegrityMappingTest extends BaseTestCaseOM
 {
-    /**
-     * @var DocumentManager
-     */
-    private $dm;
+    private DocumentManager $dm;
 
-    /**
-     * @var ReferenceIntegrityListener
-     */
-    private $referenceIntegrity;
+    private ReferenceIntegrityListener $referenceIntegrity;
 
     protected function setUp(): void
     {
@@ -52,7 +46,7 @@ final class ReferenceIntegrityMappingTest extends BaseTestCaseOM
         $this->dm = $this->getMockDocumentManager('gedmo_extensions_test', $yamlDriver);
     }
 
-    public function testYamlMapping()
+    public function testYamlMapping(): void
     {
         $referencerMeta = $this->dm->getClassMetadata(Referencer::class);
         $referenceeMeta = $this->dm->getClassMetadata(Referenced::class);

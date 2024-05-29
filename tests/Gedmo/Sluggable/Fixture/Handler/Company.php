@@ -14,6 +14,7 @@ namespace Gedmo\Tests\Sluggable\Fixture\Handler;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Gedmo\Sluggable\Handler\InversedRelativeSlugHandler;
 
 /**
  * @ORM\Entity
@@ -34,25 +35,26 @@ class Company
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(length=64)
      */
     #[ORM\Column(length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(handlers={
-     *      @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\InversedRelativeSlugHandler", options={
-     *          @Gedmo\SlugHandlerOption(name="relationClass", value="Gedmo\Tests\Sluggable\Fixture\Handler\User"),
-     *          @Gedmo\SlugHandlerOption(name="mappedBy", value="company"),
-     *          @Gedmo\SlugHandlerOption(name="inverseSlugField", value="slug")
-     *      })
+     *     @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\InversedRelativeSlugHandler", options={
+     *         @Gedmo\SlugHandlerOption(name="relationClass", value="Gedmo\Tests\Sluggable\Fixture\Handler\User"),
+     *         @Gedmo\SlugHandlerOption(name="mappedBy", value="company"),
+     *         @Gedmo\SlugHandlerOption(name="inverseSlugField", value="slug")
+     *     })
      * }, fields={"title"})
+     *
      * @ORM\Column(length=64, unique=true)
      */
+    #[Gedmo\Slug(fields: ['title'])]
+    #[Gedmo\SlugHandler(class: InversedRelativeSlugHandler::class, options: ['relationClass' => User::class, 'mappedBy' => 'company', 'inverseSlugField' => 'slug'])]
     #[ORM\Column(length: 64, unique: true)]
     private $alias;
 

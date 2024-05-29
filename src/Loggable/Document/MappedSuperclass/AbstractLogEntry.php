@@ -11,17 +11,21 @@ namespace Gedmo\Loggable\Document\MappedSuperclass;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoODM;
 use Doctrine\ODM\MongoDB\Types\Type;
+use Gedmo\Loggable\LogEntryInterface;
+use Gedmo\Loggable\Loggable;
 
 /**
- * Gedmo\Loggable\Document\MappedSuperclass\AbstractLogEntry
+ * @phpstan-template T of Loggable|object
+ *
+ * @phpstan-implements LogEntryInterface<T>
  *
  * @MongoODM\MappedSuperclass
  */
 #[MongoODM\MappedSuperclass]
-abstract class AbstractLogEntry
+abstract class AbstractLogEntry implements LogEntryInterface
 {
     /**
-     * @var int
+     * @var string|null
      *
      * @MongoODM\Id
      */
@@ -29,7 +33,9 @@ abstract class AbstractLogEntry
     protected $id;
 
     /**
-     * @var string
+     * @var string|null
+     *
+     * @phpstan-var self::ACTION_CREATE|self::ACTION_UPDATE|self::ACTION_REMOVE|null
      *
      * @MongoODM\Field(type="string")
      */
@@ -37,7 +43,7 @@ abstract class AbstractLogEntry
     protected $action;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
      * @MongoODM\Field(type="date")
      */
@@ -45,7 +51,7 @@ abstract class AbstractLogEntry
     protected $loggedAt;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @MongoODM\Field(type="string", nullable=true)
      */
@@ -53,7 +59,9 @@ abstract class AbstractLogEntry
     protected $objectId;
 
     /**
-     * @var string
+     * @var string|null
+     *
+     * @phpstan-var class-string<T>|null
      *
      * @MongoODM\Field(type="string")
      */
@@ -61,7 +69,7 @@ abstract class AbstractLogEntry
     protected $objectClass;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @MongoODM\Field(type="int")
      */
@@ -77,7 +85,7 @@ abstract class AbstractLogEntry
     protected $data;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @MongoODM\Field(type="string", nullable=true)
      */
@@ -87,7 +95,7 @@ abstract class AbstractLogEntry
     /**
      * Get id
      *
-     * @return int
+     * @return string|null
      */
     public function getId()
     {
@@ -97,7 +105,7 @@ abstract class AbstractLogEntry
     /**
      * Get action
      *
-     * @return string
+     * @return string|null
      */
     public function getAction()
     {
@@ -108,6 +116,8 @@ abstract class AbstractLogEntry
      * Set action
      *
      * @param string $action
+     *
+     * @return void
      */
     public function setAction($action)
     {
@@ -117,7 +127,7 @@ abstract class AbstractLogEntry
     /**
      * Get object class
      *
-     * @return string
+     * @return string|null
      */
     public function getObjectClass()
     {
@@ -128,6 +138,8 @@ abstract class AbstractLogEntry
      * Set object class
      *
      * @param string $objectClass
+     *
+     * @return void
      */
     public function setObjectClass($objectClass)
     {
@@ -137,7 +149,7 @@ abstract class AbstractLogEntry
     /**
      * Get object id
      *
-     * @return string
+     * @return string|null
      */
     public function getObjectId()
     {
@@ -148,6 +160,8 @@ abstract class AbstractLogEntry
      * Set object id
      *
      * @param string $objectId
+     *
+     * @return void
      */
     public function setObjectId($objectId)
     {
@@ -157,7 +171,7 @@ abstract class AbstractLogEntry
     /**
      * Get username
      *
-     * @return string
+     * @return string|null
      */
     public function getUsername()
     {
@@ -168,6 +182,8 @@ abstract class AbstractLogEntry
      * Set username
      *
      * @param string $username
+     *
+     * @return void
      */
     public function setUsername($username)
     {
@@ -177,7 +193,7 @@ abstract class AbstractLogEntry
     /**
      * Get loggedAt
      *
-     * @return \DateTime
+     * @return \DateTime|null
      */
     public function getLoggedAt()
     {
@@ -186,6 +202,8 @@ abstract class AbstractLogEntry
 
     /**
      * Set loggedAt to "now"
+     *
+     * @return void
      */
     public function setLoggedAt()
     {
@@ -206,6 +224,8 @@ abstract class AbstractLogEntry
      * Set data
      *
      * @param array<string, mixed> $data
+     *
+     * @return void
      */
     public function setData($data)
     {
@@ -216,6 +236,8 @@ abstract class AbstractLogEntry
      * Set current version
      *
      * @param int $version
+     *
+     * @return void
      */
     public function setVersion($version)
     {
@@ -225,7 +247,7 @@ abstract class AbstractLogEntry
     /**
      * Get current version
      *
-     * @return int
+     * @return int|null
      */
     public function getVersion()
     {

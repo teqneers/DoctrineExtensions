@@ -17,6 +17,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\Entity
+ *
  * @Gedmo\TranslationEntity(class="PersonTranslation")
  */
 #[ORM\Entity]
@@ -24,6 +25,8 @@ use Gedmo\Mapping\Annotation as Gedmo;
 class Person
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
@@ -35,23 +38,24 @@ class Person
 
     /**
      * @Gedmo\Translatable
+     *
      * @ORM\Column(name="name", type="string", length=128)
      */
     #[Gedmo\Translatable]
     #[ORM\Column(name: 'name', type: Types::STRING, length: 128)]
-    private $name;
+    private ?string $name = null;
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setName($name)
+    public function setName(?string $name): void
     {
         $this->name = $name;
     }
 
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }

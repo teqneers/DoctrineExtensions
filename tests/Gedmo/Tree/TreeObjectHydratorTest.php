@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Tree;
 
 use Doctrine\Common\EventManager;
-use Doctrine\DBAL\Logging\DebugStack;
 use Doctrine\ORM\Query;
 use Gedmo\Tests\Tool\BaseTestCaseORM;
 use Gedmo\Tests\Tree\Fixture\Category;
@@ -28,8 +27,8 @@ use Gedmo\Tree\TreeListener;
  */
 final class TreeObjectHydratorTest extends BaseTestCaseORM
 {
-    public const CATEGORY = Category::class;
-    public const ROOT_CATEGORY = RootCategory::class;
+    private const CATEGORY = Category::class;
+    private const ROOT_CATEGORY = RootCategory::class;
 
     protected function setUp(): void
     {
@@ -38,18 +37,17 @@ final class TreeObjectHydratorTest extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new TreeListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
 
         $this->em->getConfiguration()->addCustomHydrationMode('tree', TreeObjectHydrator::class);
     }
 
-    public function testFullTreeHydration()
+    public function testFullTreeHydration(): void
     {
         $this->populate();
         $this->em->clear();
 
-        $stack = new DebugStack();
-        $this->em->getConfiguration()->setSQLLogger($stack);
+        $this->queryLogger->reset();
 
         $repo = $this->em->getRepository(self::ROOT_CATEGORY);
 
@@ -90,18 +88,17 @@ final class TreeObjectHydratorTest extends BaseTestCaseORM
         static::assertCount(0, $citrons->getChildren());
 
         // Make sure only one query was executed
-        static::assertCount(1, $stack->queries);
+        static::assertCount(1, $this->queryLogger->queries);
     }
 
-    public function testPartialTreeHydration()
+    public function testPartialTreeHydration(): void
     {
         $this->populate();
         $this->em->clear();
 
-        $stack = new DebugStack();
-        $this->em->getConfiguration()->setSQLLogger($stack);
+        $this->queryLogger->reset();
 
-        /** @var NestedTreeRepository $repo */
+        /** @var NestedTreeRepository<RootCategory> $repo */
         $repo = $this->em->getRepository(self::ROOT_CATEGORY);
 
         $fruits = $repo->findOneBy(['title' => 'Fruits']);
@@ -124,18 +121,17 @@ final class TreeObjectHydratorTest extends BaseTestCaseORM
         static::assertSame('Citrons', $citrons->getTitle());
         static::assertCount(0, $citrons->getChildren());
 
-        static::assertCount(2, $stack->queries);
+        static::assertCount(2, $this->queryLogger->queries);
     }
 
-    public function testMultipleRootNodesTreeHydration()
+    public function testMultipleRootNodesTreeHydration(): void
     {
         $this->populate();
         $this->em->clear();
 
-        $stack = new DebugStack();
-        $this->em->getConfiguration()->setSQLLogger($stack);
+        $this->queryLogger->reset();
 
-        /** @var NestedTreeRepository $repo */
+        /** @var NestedTreeRepository<RootCategory> $repo */
         $repo = $this->em->getRepository(self::ROOT_CATEGORY);
 
         $food = $repo->findOneBy(['title' => 'Food']);
@@ -170,10 +166,10 @@ final class TreeObjectHydratorTest extends BaseTestCaseORM
         static::assertSame('Citrons', $citrons->getTitle());
         static::assertCount(0, $citrons->getChildren());
 
-        static::assertCount(2, $stack->queries);
+        static::assertCount(2, $this->queryLogger->queries);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::CATEGORY,

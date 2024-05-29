@@ -21,22 +21,19 @@ use Gedmo\Mapping\Driver\File;
  * extension.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @deprecated since gedmo/doctrine-extensions 3.5, will be removed in version 4.0.
+ *
+ * @internal
  */
 class Yaml extends File implements Driver
 {
     /**
-     * File extension
-     *
-     * @var string
-     */
-    protected $_extension = '.dcm.yml';
-
-    /**
      * List of types which are valid for slug and sluggable fields
      *
-     * @var array
+     * @var string[]
      */
-    private $validTypes = [
+    private const VALID_TYPES = [
         'string',
         'text',
         'integer',
@@ -46,28 +43,31 @@ class Yaml extends File implements Driver
     ];
 
     /**
-     * {@inheritdoc}
+     * File extension
+     *
+     * @var string
      */
+    protected $_extension = '.dcm.yml';
+
     public function readExtendedMetadata($meta, array &$config)
     {
         $mapping = $this->_getMapping($meta->getName());
 
         if (isset($mapping['fields'])) {
             foreach ($mapping['fields'] as $field => $fieldMapping) {
-                $this->buildFieldConfiguration($field, $fieldMapping, $meta, $config);
+                $config = $this->buildFieldConfiguration($field, $fieldMapping, $meta, $config);
             }
         }
 
         if (isset($mapping['attributeOverride'])) {
             foreach ($mapping['attributeOverride'] as $field => $overrideMapping) {
-                $this->buildFieldConfiguration($field, $overrideMapping, $meta, $config);
+                $config = $this->buildFieldConfiguration($field, $overrideMapping, $meta, $config);
             }
         }
+
+        return $config;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function _loadMappingFile($file)
     {
         return \Symfony\Component\Yaml\Yaml::parse(file_get_contents($file));
@@ -76,8 +76,8 @@ class Yaml extends File implements Driver
     /**
      * Checks if $field type is valid as Sluggable field
      *
-     * @param object $meta
-     * @param string $field
+     * @param ClassMetadata $meta
+     * @param string        $field
      *
      * @return bool
      */
@@ -85,10 +85,16 @@ class Yaml extends File implements Driver
     {
         $mapping = $meta->getFieldMapping($field);
 
-        return $mapping && in_array($mapping['type'], $this->validTypes, true);
+        return $mapping && in_array($mapping['type'], self::VALID_TYPES, true);
     }
 
-    private function buildFieldConfiguration(string $field, array $fieldMapping, ClassMetadata $meta, array &$config): void
+    /**
+     * @param array<string, mixed> $fieldMapping
+     * @param array<string, mixed> $config
+     *
+     * @return array<string, mixed>
+     */
+    private function buildFieldConfiguration(string $field, array $fieldMapping, ClassMetadata $meta, array $config): array
     {
         if (isset($fieldMapping['gedmo'])) {
             if (isset($fieldMapping['gedmo']['slug'])) {
@@ -158,5 +164,7 @@ class Yaml extends File implements Driver
                 }
             }
         }
+
+        return $config;
     }
 }

@@ -14,6 +14,7 @@ namespace Gedmo\Tests\Sluggable\Fixture\Handler\People;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Gedmo\Sluggable\Handler\RelativeSlugHandler;
 
 /**
  * @ORM\Entity
@@ -34,37 +35,36 @@ class Person
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(length=64)
      */
     #[ORM\Column(length: 64)]
-    private $name;
+    private ?string $name = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(handlers={
-     *      @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\RelativeSlugHandler", options={
-     *          @Gedmo\SlugHandlerOption(name="relationField", value="occupation"),
-     *          @Gedmo\SlugHandlerOption(name="relationSlugField", value="slug"),
-     *          @Gedmo\SlugHandlerOption(name="separator", value="/")
-     *      })
+     *     @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\RelativeSlugHandler", options={
+     *         @Gedmo\SlugHandlerOption(name="relationField", value="occupation"),
+     *         @Gedmo\SlugHandlerOption(name="relationSlugField", value="slug"),
+     *         @Gedmo\SlugHandlerOption(name="separator", value="/")
+     *     })
      * }, separator="-", updatable=true, fields={"name"})
+     *
      * @ORM\Column(name="slug", type="string", length=64, unique=true)
      */
+    #[Gedmo\Slug(separator: '-', updatable: true, fields: ['name'])]
+    #[Gedmo\SlugHandler(class: RelativeSlugHandler::class, options: ['relationField' => 'occupation', 'relationSlugField' => 'slug', 'separator' => '/'])]
     #[ORM\Column(name: 'slug', type: Types::STRING, length: 64, unique: true)]
     private $slug;
 
     /**
-     * @var Occupation|null
-     *
      * @ORM\ManyToOne(targetEntity="Occupation")
      */
     #[ORM\ManyToOne(targetEntity: Occupation::class)]
-    private $occupation;
+    private ?Occupation $occupation = null;
 
-    public function setOccupation(Occupation $occupation = null): void
+    public function setOccupation(?Occupation $occupation = null): void
     {
         $this->occupation = $occupation;
     }

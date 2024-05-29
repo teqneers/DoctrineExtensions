@@ -9,7 +9,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Sluggable;
+namespace Gedmo\Tests\Sluggable\Handlers;
 
 use Doctrine\Common\EventManager;
 use Gedmo\Sluggable\SluggableListener;
@@ -25,8 +25,8 @@ use Gedmo\Tree\TreeListener;
  */
 final class BothSlugHandlerTest extends BaseTestCaseORM
 {
-    public const OCCUPATION = Occupation::class;
-    public const PERSON = Person::class;
+    private const OCCUPATION = Occupation::class;
+    private const PERSON = Person::class;
 
     protected function setUp(): void
     {
@@ -36,10 +36,10 @@ final class BothSlugHandlerTest extends BaseTestCaseORM
         $evm->addEventSubscriber(new TreeListener());
         $evm->addEventSubscriber(new SluggableListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testSlugGeneration()
+    public function testSlugGeneration(): void
     {
         $this->populate();
         $repo = $this->em->getRepository(self::PERSON);
@@ -54,7 +54,7 @@ final class BothSlugHandlerTest extends BaseTestCaseORM
         static::assertSame('singer/hurty', $hurty->getSlug());
     }
 
-    public function testSlugUpdates()
+    public function testSlugUpdates(): void
     {
         $this->populate();
         $repo = $this->em->getRepository(self::PERSON);
@@ -82,7 +82,7 @@ final class BothSlugHandlerTest extends BaseTestCaseORM
         static::assertSame('artist/hurty', $hurty->getSlug());
     }
 
-    public function test1093()
+    public function test1093(): void
     {
         $this->populate();
         $personRepo = $this->em->getRepository(self::PERSON);
@@ -108,7 +108,7 @@ final class BothSlugHandlerTest extends BaseTestCaseORM
         static::assertSame('web/enthusiast/php/herzult', $herzult->getSlug());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::OCCUPATION,

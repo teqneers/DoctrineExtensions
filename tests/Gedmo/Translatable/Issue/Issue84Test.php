@@ -9,10 +9,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Translatable;
+namespace Gedmo\Tests\Translatable\Issue;
 
 use Doctrine\Common\EventManager;
-use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\Persistence\Proxy;
 use Gedmo\Tests\Tool\BaseTestCaseORM;
 use Gedmo\Tests\Translatable\Fixture\Article;
 use Gedmo\Translatable\Entity\Translation;
@@ -25,10 +25,10 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class Issue84Test extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const TRANSLATION = Translation::class;
+    private const ARTICLE = Article::class;
+    private const TRANSLATION = Translation::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -42,7 +42,7 @@ final class Issue84Test extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testIssue84()
+    public function testIssue84(): void
     {
         $repo = $this->em->getRepository(self::TRANSLATION);
 
@@ -60,7 +60,7 @@ final class Issue84Test extends BaseTestCaseORM
         static::assertCount(1, $trans);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,

@@ -15,6 +15,10 @@ use Doctrine\DBAL\Types\Type;
 
 /**
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @deprecated since gedmo/doctrine-extensions 3.5.
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class QueryAnalyzer implements SQLLogger
 {
@@ -34,10 +38,8 @@ class QueryAnalyzer implements SQLLogger
 
     /**
      * Total execution time of all queries
-     *
-     * @var float
      */
-    private $totalExecutionTime = 0;
+    private int $totalExecutionTime = 0;
 
     /**
      * List of queries executed
@@ -65,20 +67,20 @@ class QueryAnalyzer implements SQLLogger
     }
 
     /**
-     * {@inheritdoc}
+     * @return void
      */
-    public function startQuery($sql, array $params = null, array $types = null)
+    public function startQuery($sql, ?array $params = null, ?array $types = null)
     {
         $this->queryStartTime = microtime(true);
         $this->queries[] = $this->generateSql($sql, $params, $types);
     }
 
     /**
-     * {@inheritdoc}
+     * @return void
      */
     public function stopQuery()
     {
-        $ms = round(microtime(true) - $this->queryStartTime, 4) * 1000;
+        $ms = (int) (round(microtime(true) - $this->queryStartTime, 4) * 1000);
         $this->queryExecutionTimes[] = $ms;
         $this->totalExecutionTime += $ms;
     }
@@ -183,6 +185,9 @@ class QueryAnalyzer implements SQLLogger
 
     /**
      * Create the SQL with mapped parameters
+     *
+     * @param array<int|string, mixed>|null       $params
+     * @param array<int|string, string|Type>|null $types
      */
     private function generateSql(string $sql, ?array $params, ?array $types): string
     {
@@ -206,6 +211,11 @@ class QueryAnalyzer implements SQLLogger
 
     /**
      * Get the converted parameter list
+     *
+     * @param array<int|string, mixed>       $params
+     * @param array<int|string, string|Type> $types
+     *
+     * @return array<int|string, mixed>
      */
     private function getConvertedParams(array $params, array $types): array
     {

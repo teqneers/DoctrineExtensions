@@ -9,31 +9,34 @@
 
 namespace Gedmo\Tool\Wrapper;
 
+use Doctrine\Common\Util\ClassUtils;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\Persistence\Proxy as PersistenceProxy;
 
 /**
  * Wraps entity or proxy for more convenient
  * manipulation
  *
+ * @phpstan-extends AbstractWrapper<ClassMetadata>
+ *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class EntityWrapper extends AbstractWrapper
 {
     /**
      * Entity identifier
      *
-     * @var array|null
+     * @var array<string, mixed>|null
      */
     private $identifier;
 
     /**
      * True if entity or proxy is loaded
-     *
-     * @var bool
      */
-    private $initialized = false;
+    private bool $initialized = false;
 
     /**
      * Wrap entity
@@ -47,9 +50,6 @@ class EntityWrapper extends AbstractWrapper
         $this->meta = $em->getClassMetadata(get_class($this->object));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPropertyValue($property)
     {
         $this->initialize();
@@ -57,9 +57,6 @@ class EntityWrapper extends AbstractWrapper
         return $this->meta->getReflectionProperty($property)->getValue($this->object);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setPropertyValue($property, $value)
     {
         $this->initialize();
@@ -68,60 +65,50 @@ class EntityWrapper extends AbstractWrapper
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function hasValidIdentifier()
     {
         return null !== $this->getIdentifier();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRootObjectName()
     {
         return $this->meta->rootEntityName;
     }
 
     /**
-     * {@inheritdoc}
+     * @param bool $flatten
      */
-    public function getIdentifier($single = true)
+    public function getIdentifier($single = true, $flatten = false)
     {
+        $flatten = 1 < \func_num_args() && true === func_get_arg(1);
         if (null === $this->identifier) {
-            if ($this->object instanceof Proxy) {
-                $uow = $this->om->getUnitOfWork();
-                if ($uow->isInIdentityMap($this->object)) {
-                    $this->identifier = $uow->getEntityIdentifier($this->object);
-                } else {
-                    $this->initialize();
-                }
-            }
-            if (null === $this->identifier) {
-                $this->identifier = [];
-                $incomplete = false;
-                foreach ($this->meta->identifier as $name) {
-                    $this->identifier[$name] = $this->getPropertyValue($name);
-                    if (null === $this->identifier[$name]) {
-                        $incomplete = true;
-                    }
-                }
-                if ($incomplete) {
-                    $this->identifier = null;
-                }
+            $uow = $this->om->getUnitOfWork();
+            $this->identifier = $uow->isInIdentityMap($this->object)
+                ? $uow->getEntityIdentifier($this->object)
+                : $this->meta->getIdentifierValues($this->object);
+            if (is_array($this->identifier) && empty($this->identifier)) {
+                $this->identifier = null;
             }
         }
-        if ($single && is_array($this->identifier)) {
-            return reset($this->identifier);
+        if (is_array($this->identifier)) {
+            if ($single) {
+                return reset($this->identifier);
+            }
+            if ($flatten) {
+                $id = $this->identifier;
+                foreach ($id as $i => $value) {
+                    if (is_object($value) && $this->om->getMetadataFactory()->hasMetadataFor(ClassUtils::getClass($value))) {
+                        $id[$i] = (new self($value, $this->om))->getIdentifier(false, true);
+                    }
+                }
+
+                return implode(' ', $id);
+            }
         }
 
         return $this->identifier;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isEmbeddedAssociation($field)
     {
         return false;
@@ -130,6 +117,8 @@ class EntityWrapper extends AbstractWrapper
     /**
      * Initialize the entity if it is proxy
      * required when is detached or not initialized
+     *
+     * @return void
      */
     protected function initialize()
     {

@@ -10,13 +10,17 @@
 namespace Gedmo\Sluggable;
 
 use Doctrine\Common\EventArgs;
+use Doctrine\Persistence\Event\LifecycleEventArgs;
+use Doctrine\Persistence\Event\LoadClassMetadataEventArgs;
+use Doctrine\Persistence\Event\ManagerEventArgs;
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
+use Gedmo\Exception\InvalidArgumentException;
 use Gedmo\Mapping\MappedEventSubscriber;
 use Gedmo\Sluggable\Handler\SlugHandlerInterface;
 use Gedmo\Sluggable\Handler\SlugHandlerWithUniqueCallbackInterface;
 use Gedmo\Sluggable\Mapping\Event\SluggableAdapter;
 use Gedmo\Sluggable\Util\Urlizer;
-use Gedmo\Tool\Wrapper\AbstractWrapper;
 
 /**
  * The SluggableListener handles the generation of slugs
@@ -27,6 +31,39 @@ use Gedmo\Tool\Wrapper\AbstractWrapper;
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  * @author Klein Florian <florian.klein@free.fr>
+ *
+ * @phpstan-type SluggableConfiguration = array{
+ *   mappedBy?: string,
+ *   pathSeparator?: string,
+ *   slug?: string,
+ *   slugs?: array<string, array{
+ *     fields?: string[],
+ *     slug?: string,
+ *     style?: string,
+ *     dateFormat?: string,
+ *     updatable?: bool,
+ *     unique?: bool,
+ *     unique_base?: string,
+ *     separator?: string,
+ *     prefix?: string,
+ *     suffix?: string,
+ *     handlers?: array<class-string, array{
+ *       mappedBy?: string,
+ *       inverseSlugField?: string,
+ *       parentRelationField?: string,
+ *       relationClass?: class-string,
+ *       relationField?: string,
+ *       relationSlugField?: string,
+ *       separator?: string,
+ *     }>,
+ *   }>,
+ *   unique?: bool,
+ *   useObjectClass?: class-string,
+ * }
+ *
+ * @phpstan-method SluggableConfiguration getConfiguration(ObjectManager $objectManager, $class)
+ *
+ * @method SluggableAdapter getEventAdapter(EventArgs $args)
  */
 class SluggableListener extends MappedEventSubscriber
 {
@@ -42,6 +79,8 @@ class SluggableListener extends MappedEventSubscriber
      * Transliteration callback for slugs
      *
      * @var callable
+     *
+     * @phpstan-var callable(string $text, string $separator, object $object): string
      */
     private $transliterator = [Urlizer::class, 'transliterate'];
 
@@ -49,6 +88,8 @@ class SluggableListener extends MappedEventSubscriber
      * Urlize callback for slugs
      *
      * @var callable
+     *
+     * @phpstan-var callable(string $text, string $separator, object $object): string
      */
     private $urlizer = [Urlizer::class, 'urlize'];
 
@@ -58,23 +99,27 @@ class SluggableListener extends MappedEventSubscriber
      * composition in number of persisted objects
      * during the same flush
      *
-     * @var array
+     * @var array<string, array<int, object>>
+     *
+     * @phpstan-var array<class-string, array<int, object>>
      */
-    private $persisted = [];
+    private array $persisted = [];
 
     /**
      * List of initialized slug handlers
      *
-     * @var array
+     * @var array<string, SlugHandlerInterface>
+     *
+     * @phpstan-var array<class-string<SlugHandlerInterface>, SlugHandlerInterface>
      */
-    private $handlers = [];
+    private array $handlers = [];
 
     /**
      * List of filters which are manipulated when slugs are generated
      *
-     * @var array
+     * @var array<string, array<string, mixed>>
      */
-    private $managedFilters = [];
+    private array $managedFilters = [];
 
     /**
      * Specifies the list of events to listen
@@ -96,14 +141,16 @@ class SluggableListener extends MappedEventSubscriber
      *
      * @param callable $callable
      *
-     * @throws \Gedmo\Exception\InvalidArgumentException
+     * @phpstan-param callable(string $text, string $separator, object $object): string $callable
+     *
+     * @throws InvalidArgumentException
      *
      * @return void
      */
     public function setTransliterator($callable)
     {
         if (!is_callable($callable)) {
-            throw new \Gedmo\Exception\InvalidArgumentException('Invalid transliterator callable parameter given');
+            throw new InvalidArgumentException('Invalid transliterator callable parameter given');
         }
         $this->transliterator = $callable;
     }
@@ -113,11 +160,17 @@ class SluggableListener extends MappedEventSubscriber
      * to urlize slugs
      *
      * @param callable $callable
+     *
+     * @phpstan-param callable(string $text, string $separator, object $object): string $callable
+     *
+     * @throws InvalidArgumentException
+     *
+     * @return void
      */
     public function setUrlizer($callable)
     {
         if (!is_callable($callable)) {
-            throw new \Gedmo\Exception\InvalidArgumentException('Invalid urlizer callable parameter given');
+            throw new InvalidArgumentException('Invalid urlizer callable parameter given');
         }
         $this->urlizer = $callable;
     }
@@ -126,6 +179,8 @@ class SluggableListener extends MappedEventSubscriber
      * Get currently used transliterator callable
      *
      * @return callable
+     *
+     * @phpstan-return callable(string $text, string $separator, object $object): string
      */
     public function getTransliterator()
     {
@@ -136,6 +191,8 @@ class SluggableListener extends MappedEventSubscriber
      * Get currently used urlizer callable
      *
      * @return callable
+     *
+     * @phpstan-return callable(string $text, string $separator, object $object): string
      */
     public function getUrlizer()
     {
@@ -147,6 +204,8 @@ class SluggableListener extends MappedEventSubscriber
      *
      * @param string $name
      * @param bool   $disable True by default
+     *
+     * @return void
      */
     public function addManagedFilter($name, $disable = true)
     {
@@ -157,6 +216,8 @@ class SluggableListener extends MappedEventSubscriber
      * Removes a filter from the managed set
      *
      * @param string $name
+     *
+     * @return void
      */
     public function removeManagedFilter($name)
     {
@@ -166,16 +227,23 @@ class SluggableListener extends MappedEventSubscriber
     /**
      * Mapps additional metadata
      *
+     * @param LoadClassMetadataEventArgs $eventArgs
+     *
+     * @phpstan-param LoadClassMetadataEventArgs<ClassMetadata<object>, ObjectManager> $eventArgs
+     *
      * @return void
      */
     public function loadClassMetadata(EventArgs $eventArgs)
     {
-        $ea = $this->getEventAdapter($eventArgs);
-        $this->loadMetadataForObjectClass($ea->getObjectManager(), $eventArgs->getClassMetadata());
+        $this->loadMetadataForObjectClass($eventArgs->getObjectManager(), $eventArgs->getClassMetadata());
     }
 
     /**
      * Allows identifier fields to be slugged as usual
+     *
+     * @param LifecycleEventArgs $args
+     *
+     * @phpstan-param LifecycleEventArgs<ObjectManager> $args
      *
      * @return void
      */
@@ -198,6 +266,10 @@ class SluggableListener extends MappedEventSubscriber
     /**
      * Generate slug on objects being updated during flush
      * if they require changing
+     *
+     * @param ManagerEventArgs $args
+     *
+     * @phpstan-param ManagerEventArgs<ObjectManager> $args
      *
      * @return void
      */
@@ -232,13 +304,8 @@ class SluggableListener extends MappedEventSubscriber
         }
 
         $this->manageFiltersAfterGeneration($om);
-
-        AbstractWrapper::clear();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getNamespace()
     {
         return __NAMESPACE__;
@@ -271,7 +338,7 @@ class SluggableListener extends MappedEventSubscriber
         $config = $this->getConfiguration($om, $meta->getName());
 
         foreach ($config['slugs'] as $slugField => $options) {
-            $hasHandlers = count($options['handlers']);
+            $hasHandlers = [] !== $options['handlers'];
             $options['useObjectClass'] = $config['useObjectClass'];
             // collect the slug from fields
             $slug = $meta->getReflectionProperty($slugField)->getValue($object);
@@ -345,9 +412,7 @@ class SluggableListener extends MappedEventSubscriber
                 switch ($options['style']) {
                     case 'camel':
                         $quotedSeparator = preg_quote($options['separator']);
-                        $slug = preg_replace_callback('/^[a-z]|'.$quotedSeparator.'[a-z]/smi', static function ($m) {
-                            return strtoupper($m[0]);
-                        }, $slug);
+                        $slug = preg_replace_callback('/^[a-z]|'.$quotedSeparator.'[a-z]/smi', static fn ($m) => strtoupper($m[0]), $slug);
 
                         break;
 
@@ -418,6 +483,8 @@ class SluggableListener extends MappedEventSubscriber
 
     /**
      * Generates the unique slug
+     *
+     * @param array<string, mixed> $config
      */
     private function makeUniqueSlug(SluggableAdapter $ea, object $object, string $preferredSlug, bool $recursing = false, array $config = []): string
     {
@@ -446,7 +513,7 @@ class SluggableListener extends MappedEventSubscriber
         }
 
         // load similar slugs
-        $result = array_merge($ea->getSimilarSlugs($object, $meta, $config, $preferredSlug), $similarPersisted);
+        $result = [...$ea->getSimilarSlugs($object, $meta, $config, $preferredSlug), ...$similarPersisted];
 
         // leave only right slugs
 
@@ -469,7 +536,7 @@ class SluggableListener extends MappedEventSubscriber
                 $sameSlugs[] = $list[$config['slug']];
             }
 
-            $i = pow(10, $this->exponent);
+            $i = 10 ** $this->exponent;
             $uniqueSuffix = (string) $i;
             if ($recursing || in_array($generatedSlug, $sameSlugs, true)) {
                 do {
@@ -535,7 +602,7 @@ class SluggableListener extends MappedEventSubscriber
     /**
      * Retrieves a FilterCollection instance from the given ObjectManager.
      *
-     * @throws \Gedmo\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * @return mixed
      */
@@ -548,6 +615,6 @@ class SluggableListener extends MappedEventSubscriber
             return $om->getFilterCollection();
         }
 
-        throw new \Gedmo\Exception\InvalidArgumentException('ObjectManager does not support filters');
+        throw new InvalidArgumentException('ObjectManager does not support filters');
     }
 }

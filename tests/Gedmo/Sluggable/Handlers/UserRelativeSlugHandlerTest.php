@@ -9,7 +9,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Sluggable;
+namespace Gedmo\Tests\Sluggable\Handlers;
 
 use Doctrine\Common\EventManager;
 use Gedmo\Sluggable\SluggableListener;
@@ -24,8 +24,8 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class UserRelativeSlugHandlerTest extends BaseTestCaseORM
 {
-    public const USER = User::class;
-    public const COMPANY = Company::class;
+    private const USER = User::class;
+    private const COMPANY = Company::class;
 
     protected function setUp(): void
     {
@@ -34,10 +34,10 @@ final class UserRelativeSlugHandlerTest extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new SluggableListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testRelativeSlug()
+    public function testRelativeSlug(): void
     {
         $company = new Company();
         $company->setTitle('KnpLabs');
@@ -59,7 +59,7 @@ final class UserRelativeSlugHandlerTest extends BaseTestCaseORM
         static::assertSame('knplabs-nantes/gedi', $gedi->getSlug(), 'relative slug is invalid');
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::USER,

@@ -17,12 +17,11 @@ namespace Gedmo\Uploadable\FilenameGenerator;
  *
  * @author Gustavo Falco <comfortablynumb84@gmail.com>
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class FilenameGeneratorAlphanumeric implements FilenameGeneratorInterface
 {
-    /**
-     * {@inheritdoc}
-     */
     public static function generate($filename, $extension, $object = null)
     {
         return preg_replace('/[^a-z0-9]+/', '-', strtolower($filename)).$extension;

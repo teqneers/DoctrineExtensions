@@ -12,82 +12,101 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Sortable\Fixture;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Driver\PDO\Exception as PDODriverException;
-use Doctrine\DBAL\Driver\PDOException as LegacyPDOException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Gedmo\Sortable\Entity\Repository\SortableRepository;
 
 /**
  * @ORM\Entity(repositoryClass="Gedmo\Sortable\Entity\Repository\SortableRepository")
  * @ORM\HasLifecycleCallbacks
  */
+#[ORM\Entity(repositoryClass: SortableRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class CustomerType
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: Types::INTEGER)]
     private $id;
 
     /**
      * @ORM\Column(name="name", type="string")
      */
-    private $name;
+    #[ORM\Column(name: 'name', type: Types::STRING)]
+    private ?string $name = null;
 
     /**
      * @Gedmo\SortablePosition
+     *
      * @ORM\Column(name="position", type="integer")
      */
-    private $position;
+    #[Gedmo\SortablePosition]
+    #[ORM\Column(name: 'position', type: Types::INTEGER)]
+    private ?int $position = null;
 
     /**
+     * @var Collection<int, Customer>
+     *
      * @ORM\OneToMany(targetEntity="Customer", mappedBy="type")
      */
-    private $customers;
+    #[ORM\OneToMany(mappedBy: 'type', targetEntity: Customer::class)]
+    private Collection $customers;
 
     public function __construct()
     {
         $this->customers = new ArrayCollection();
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    public function setName($name)
+    public function setName(?string $name): void
     {
         $this->name = $name;
     }
 
-    public function getPosition()
+    public function getPosition(): ?int
     {
         return $this->position;
     }
 
-    public function setPosition($position)
+    public function setPosition(?int $position): void
     {
         $this->position = $position;
     }
 
-    public function getCustomers()
+    /**
+     * @return Collection<int, Customer>
+     */
+    public function getCustomers(): Collection
     {
         return $this->customers;
     }
 
-    public function addCustomer(Customer $customer)
+    public function addCustomer(Customer $customer): void
     {
         $this->customers->add($customer);
     }
 
-    public function removeCustomer(Customer $customer)
+    public function removeCustomer(Customer $customer): void
     {
         $this->customers->removeElement($customer);
     }
@@ -95,18 +114,14 @@ class CustomerType
     /**
      * @ORM\PostRemove
      */
-    public function postRemove()
+    #[ORM\PostRemove]
+    public function postRemove(): void
     {
         if ($this->getCustomers()->count() > 0) {
             // we imitate a foreign key constraint exception because Doctrine
             // does not support SQLite constraints, which must be tested, too.
 
             $pdoException = new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1451 Cannot delete or update a parent row: a foreign key constraint fails', 23000);
-
-            // @todo: This check can be removed when dropping support for doctrine/dbal 2.x.
-            if (class_exists(LegacyPDOException::class)) {
-                throw new ForeignKeyConstraintViolationException(sprintf('An exception occurred while deleting the customer type with id %s.', $this->getId()), new LegacyPDOException($pdoException));
-            }
 
             throw new ForeignKeyConstraintViolationException(PDODriverException::new($pdoException), null);
         }

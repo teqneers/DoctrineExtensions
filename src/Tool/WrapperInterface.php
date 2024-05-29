@@ -14,6 +14,8 @@ use Doctrine\Persistence\Mapping\ClassMetadata;
 /**
  * Interface for a wrapper of a managed object.
  *
+ * @phpstan-template-covariant TClassMetadata of ClassMetadata
+ *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
 interface WrapperInterface
@@ -45,7 +47,11 @@ interface WrapperInterface
     public function setPropertyValue($property, $value);
 
     /**
+     * @deprecated since gedmo/doctrine-extensions 3.5 and to be removed in version 4.0.
+     *
      * Populates the wrapped object with the given property values.
+     *
+     * @param array<string, mixed> $data
      *
      * @return $this
      */
@@ -62,6 +68,8 @@ interface WrapperInterface
      * Get the object metadata.
      *
      * @return ClassMetadata
+     *
+     * @phpstan-return TClassMetadata
      */
     public function getMetadata();
 
@@ -70,14 +78,17 @@ interface WrapperInterface
      *
      * @param bool $single
      *
-     * @return array|mixed Array if a composite value, otherwise a single scalar
+     * @return array<string, mixed>|mixed Array if a composite value, otherwise a single scalar
+     *
+     * @todo Uncomment the second parameter for 4.0
      */
-    public function getIdentifier($single = true);
+    public function getIdentifier($single = true/* , bool $flatten = false */);
 
     /**
      * Get the root object class name.
      *
      * @return string
+     *
      * @phpstan-return class-string
      */
     public function getRootObjectName();

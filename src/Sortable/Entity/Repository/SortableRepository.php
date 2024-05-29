@@ -12,12 +12,17 @@ namespace Gedmo\Sortable\Entity\Repository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
+use Gedmo\Exception\InvalidMappingException;
 use Gedmo\Sortable\SortableListener;
 
 /**
  * Sortable Repository
  *
  * @author Lukas Botsch <lukas.botsch@gmail.com>
+ *
+ * @phpstan-extends EntityRepository<object>
  */
 class SortableRepository extends EntityRepository
 {
@@ -28,15 +33,22 @@ class SortableRepository extends EntityRepository
      */
     protected $listener;
 
+    /**
+     * @var array<string, mixed>
+     */
     protected $config;
+
+    /**
+     * @var ClassMetadata
+     */
     protected $meta;
 
     public function __construct(EntityManagerInterface $em, ClassMetadata $class)
     {
         parent::__construct($em, $class);
         $sortableListener = null;
-        foreach ($em->getEventManager()->getListeners() as $event => $listeners) {
-            foreach ($listeners as $hash => $listener) {
+        foreach ($em->getEventManager()->getAllListeners() as $listeners) {
+            foreach ($listeners as $listener) {
                 if ($listener instanceof SortableListener) {
                     $sortableListener = $listener;
 
@@ -46,19 +58,29 @@ class SortableRepository extends EntityRepository
         }
 
         if (null === $sortableListener) {
-            throw new \Gedmo\Exception\InvalidMappingException('This repository can be attached only to ORM sortable listener');
+            throw new InvalidMappingException('This repository can be attached only to ORM sortable listener');
         }
 
         $this->listener = $sortableListener;
         $this->meta = $this->getClassMetadata();
-        $this->config = $this->listener->getConfiguration($this->_em, $this->meta->getName());
+        $this->config = $this->listener->getConfiguration($this->getEntityManager(), $this->meta->getName());
     }
 
+    /**
+     * @param array<string, mixed> $groupValues
+     *
+     * @return Query
+     */
     public function getBySortableGroupsQuery(array $groupValues = [])
     {
         return $this->getBySortableGroupsQueryBuilder($groupValues)->getQuery();
     }
 
+    /**
+     * @param array<string, mixed> $groupValues
+     *
+     * @return QueryBuilder
+     */
     public function getBySortableGroupsQueryBuilder(array $groupValues = [])
     {
         $groups = isset($this->config['groups']) ? array_combine(array_values($this->config['groups']), array_keys($this->config['groups'])) : [];
@@ -68,7 +90,7 @@ class SortableRepository extends EntityRepository
             }
             unset($groups[$name]);
         }
-        if (count($groups) > 0) {
+        if ([] !== $groups) {
             throw new \InvalidArgumentException('You need to specify values for the following groups to select by sortable groups: '.implode(', ', array_keys($groups)));
         }
 
@@ -84,6 +106,11 @@ class SortableRepository extends EntityRepository
         return $qb;
     }
 
+    /**
+     * @param array<string, mixed> $groupValues
+     *
+     * @return array<int, object>
+     */
     public function getBySortableGroups(array $groupValues = [])
     {
         $query = $this->getBySortableGroupsQuery($groupValues);

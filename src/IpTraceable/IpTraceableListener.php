@@ -9,6 +9,7 @@
 
 namespace Gedmo\IpTraceable;
 
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Gedmo\AbstractTrackingListener;
 use Gedmo\Exception\InvalidArgumentException;
 use Gedmo\Mapping\Event\AdapterInterface;
@@ -18,6 +19,8 @@ use Gedmo\Mapping\Event\AdapterInterface;
  * IPs on creation and update.
  *
  * @author Pierre-Charles Bertineau <pc.bertineau@alterphp.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class IpTraceableListener extends AbstractTrackingListener
 {
@@ -29,7 +32,7 @@ class IpTraceableListener extends AbstractTrackingListener
     /**
      * Get the ipValue value to set on a ip field
      *
-     * @param object           $meta
+     * @param ClassMetadata    $meta
      * @param string           $field
      * @param AdapterInterface $eventAdapter
      *
@@ -43,9 +46,11 @@ class IpTraceableListener extends AbstractTrackingListener
     /**
      * Set a ip value to return
      *
-     * @param string $ip
+     * @param string|null $ip
      *
      * @throws InvalidArgumentException
+     *
+     * @return void
      */
     public function setIpValue($ip = null)
     {
@@ -56,9 +61,6 @@ class IpTraceableListener extends AbstractTrackingListener
         $this->ip = $ip;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getNamespace()
     {
         return __NAMESPACE__;

@@ -9,10 +9,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Sluggable;
+namespace Gedmo\Tests\Sluggable\Issue;
 
 use Doctrine\Common\EventManager;
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\ORM\Mapping\Driver\YamlDriver;
+use Doctrine\Persistence\Mapping\Driver\MappingDriver;
 use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Gedmo\Sluggable\SluggableListener;
 use Gedmo\Tests\Sluggable\Fixture\Issue116\Country;
@@ -25,7 +27,7 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class Issue116Test extends BaseTestCaseORM
 {
-    public const TARGET = Country::class;
+    private const TARGET = Country::class;
 
     protected function setUp(): void
     {
@@ -34,10 +36,10 @@ final class Issue116Test extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new SluggableListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testSlugGeneration()
+    public function testSlugGeneration(): void
     {
         $country = new Country();
         $country->setOriginalName('New Zealand');
@@ -48,18 +50,23 @@ final class Issue116Test extends BaseTestCaseORM
         static::assertSame('new-zealand', $country->getAlias());
     }
 
-    protected function getMetadataDriverImplementation()
+    protected function getMetadataDriverImplementation(): MappingDriver
     {
         $chain = new MappingDriverChain();
-        $chain->addDriver(
-            new YamlDriver([__DIR__.'/../Fixture/Issue116/Mapping']),
-            'Gedmo\Tests\Sluggable\Fixture\Issue116'
-        );
+
+        if (PHP_VERSION_ID >= 80000) {
+            $chain->addDriver(new AttributeDriver([]), 'Gedmo\Tests\Sluggable\Fixture\Issue116');
+        } else {
+            $chain->addDriver(
+                new YamlDriver([__DIR__.'/../Fixture/Issue116/Mapping']),
+                'Gedmo\Tests\Sluggable\Fixture\Issue116'
+            );
+        }
 
         return $chain;
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::TARGET,

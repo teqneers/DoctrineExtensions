@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Sluggable\Fixture\Issue827;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -35,20 +36,20 @@ class Category
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="title", length=64)
      */
     #[ORM\Column(name: 'title', length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(updatable=true, unique=true, fields={"title"})
+     *
      * @ORM\Column(length=64, nullable=true)
      */
-    #[ORM\Column(name: 'title', length: 64)]
+    #[Gedmo\Slug(updatable: true, unique: true, fields: ['title'])]
+    #[ORM\Column(length: 64, nullable: true)]
     private $slug;
 
     /**
@@ -57,7 +58,12 @@ class Category
      * @ORM\OneToMany(targetEntity="Article", mappedBy="category")
      */
     #[ORM\OneToMany(targetEntity: Article::class, mappedBy: 'category')]
-    private $articles;
+    private Collection $articles;
+
+    public function __construct()
+    {
+        $this->articles = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {

@@ -14,16 +14,19 @@ namespace Gedmo\Tests\Sluggable\Fixture;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Gedmo\Sluggable\Handler\TreeSlugHandler;
 use Gedmo\Sluggable\Sluggable;
 use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
 
 /**
  * @ORM\Entity(repositoryClass="Gedmo\Tree\Entity\Repository\NestedTreeRepository")
+ *
  * @Gedmo\Tree(type="nested")
  *
  * @author Dirk Luijk <dirk@luijkwebcreations.nl>
  */
 #[ORM\Entity(repositoryClass: NestedTreeRepository::class)]
+#[Gedmo\Tree(type: 'nested')]
 class PrefixWithTreeHandler implements Sluggable
 {
     /**
@@ -39,73 +42,72 @@ class PrefixWithTreeHandler implements Sluggable
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="title", type="string", length=64)
      */
     #[ORM\Column(name: 'title', type: Types::STRING, length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string|null
-     *
      * @Gedmo\Slug(handlers={
-     *      @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\TreeSlugHandler", options={
-     *          @Gedmo\SlugHandlerOption(name="parentRelationField", value="parent"),
-     *          @Gedmo\SlugHandlerOption(name="separator", value="/")
-     *      })
+     *     @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\TreeSlugHandler", options={
+     *         @Gedmo\SlugHandlerOption(name="parentRelationField", value="parent"),
+     *         @Gedmo\SlugHandlerOption(name="separator", value="/")
+     *     })
      * }, separator="-", updatable=true, fields={"title"}, prefix="test.")
+     *
      * @ORM\Column(name="slug", type="string", length=64, unique=true)
      */
+    #[Gedmo\Slug(separator: '-', updatable: true, fields: ['title'], prefix: 'test.')]
+    #[Gedmo\SlugHandler(class: TreeSlugHandler::class, options: ['parentRelationField' => 'parent', 'separator' => '/'])]
     #[ORM\Column(name: 'slug', type: Types::STRING, length: 64, unique: true)]
-    private $slug;
+    private ?string $slug = null;
 
     /**
-     * @var PrefixWithTreeHandler|null
-     *
      * @Gedmo\TreeParent
+     *
      * @ORM\ManyToOne(targetEntity="PrefixWithTreeHandler")
      * @ORM\JoinColumn(name="parent_id", referencedColumnName="id", onDelete="CASCADE")
      */
     #[ORM\ManyToOne(targetEntity: self::class)]
     #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    private $parent;
+    #[Gedmo\TreeParent]
+    private ?PrefixWithTreeHandler $parent = null;
 
     /**
-     * @var int|null
-     *
      * @Gedmo\TreeLeft
+     *
      * @ORM\Column(name="lft", type="integer")
      */
     #[ORM\Column(name: 'lft', type: Types::INTEGER)]
-    private $lft;
+    #[Gedmo\TreeLeft]
+    private ?int $lft = null;
 
     /**
-     * @var int|null
-     *
      * @Gedmo\TreeLevel
+     *
      * @ORM\Column(name="lvl", type="integer")
      */
     #[ORM\Column(name: 'lvl', type: Types::INTEGER)]
-    private $lvl;
+    #[Gedmo\TreeLevel]
+    private ?int $lvl = null;
 
     /**
-     * @var int|null
-     *
      * @Gedmo\TreeRight
+     *
      * @ORM\Column(name="rgt", type="integer")
      */
     #[ORM\Column(name: 'rgt', type: Types::INTEGER)]
-    private $rgt;
+    #[Gedmo\TreeRight]
+    private ?int $rgt = null;
 
     /**
-     * @var int|null
-     *
      * @Gedmo\TreeRoot
+     *
      * @ORM\Column(name="root", type="integer", nullable=true)
      */
     #[ORM\Column(name: 'root', type: Types::INTEGER, nullable: true)]
-    private $root;
+    #[Gedmo\TreeRoot]
+    private ?int $root = null;
 
     public function getId(): ?int
     {

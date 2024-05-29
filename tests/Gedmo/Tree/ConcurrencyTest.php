@@ -25,9 +25,9 @@ use Gedmo\Tree\TreeListener;
  */
 final class ConcurrencyTest extends BaseTestCaseORM
 {
-    public const CATEGORY = Category::class;
-    public const ARTICLE = Article::class;
-    public const COMMENT = Comment::class;
+    private const CATEGORY = Category::class;
+    private const ARTICLE = Article::class;
+    private const COMMENT = Comment::class;
 
     protected function setUp(): void
     {
@@ -36,11 +36,11 @@ final class ConcurrencyTest extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new TreeListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
         $this->populate();
     }
 
-    public function testConcurrentEntitiesInOneFlush()
+    public function testConcurrentEntitiesInOneFlush(): void
     {
         $repo = $this->em->getRepository(self::CATEGORY);
         $sport = $repo->findOneBy(['title' => 'Root2']);
@@ -96,10 +96,11 @@ final class ConcurrencyTest extends BaseTestCaseORM
         static::assertSame(13, $right);
     }
 
-    public function testConcurrentTree()
+    public function testConcurrentTree(): void
     {
         $repo = $this->em->getRepository(self::CATEGORY);
-        $meta = $this->em->getClassMetadata(self::CATEGORY);
+        // Force metadata class loading.
+        $this->em->getClassMetadata(self::CATEGORY);
 
         $root = $repo->findOneBy(['title' => 'Root']);
 
@@ -122,7 +123,7 @@ final class ConcurrencyTest extends BaseTestCaseORM
         static::assertSame(7, $child2Parent->getRight());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::CATEGORY,

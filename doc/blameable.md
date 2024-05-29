@@ -1,4 +1,4 @@
-# Blameable behavior extension for Doctrine 2
+# Blameable behavior extension for Doctrine
 
 **Blameable** behavior will automate the update of username or user reference fields
 on your Entities or Documents. It works through annotations and can update
@@ -22,13 +22,7 @@ Features:
 - Specific attributes and annotations for properties, and no interface required
 - Can react to specific property or relation changes to specific value
 - Can be nested with other behaviors
-- Attribute, Annotation, Yaml and Xml mapping support for extensions
-
-
-**Symfony:**
-
-- **Blameable** is available as [Bundle](https://github.com/stof/StofDoctrineExtensionsBundle)
-for **Symfony**, together with all other extensions
+- Attribute, Annotation and Xml mapping support for extensions
 
 This article will cover the basic installation and functionality of **Blameable** behavior
 
@@ -37,7 +31,6 @@ Content:
 - [Including](#including-extension) the extension
 - Entity [example](#entity-mapping)
 - Document [example](#document-mapping)
-- [Yaml](#yaml-mapping) mapping example
 - [Xml](#xml-mapping) mapping example
 - Advanced usage [examples](#advanced-examples)
 - Using [Traits](#traits)
@@ -81,7 +74,7 @@ one of them, not both.
 
 Column is a string field:
 
-``` php
+```php
 <?php
 namespace Entity;
 
@@ -187,7 +180,7 @@ class Article
 
 Column is an association:
 
-``` php
+```php
 <?php
 namespace Entity;
 
@@ -227,7 +220,7 @@ class Article
      * @ORM\JoinColumn(name="created_by", referencedColumnName="id")
      */
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(name: 'created_at', referencedColumnName: 'id')]
+    #[ORM\JoinColumn(name: 'created_by', referencedColumnName: 'id')]
     #[Gedmo\Blameable(on: 'create')]
     private $createdBy;
 
@@ -304,7 +297,7 @@ class Article
 **Note:** these examples are using annotations and attributes for mapping, you should use
 one of them, not both.
 
-``` php
+```php
 <?php
 namespace Document;
 
@@ -377,43 +370,11 @@ class Article
 
 Now on update and creation these annotated fields will be automatically updated
 
-<a name="yaml-mapping"></a>
-
-## Yaml mapping example:
-
-Yaml mapped Article: **/mapping/yaml/Entity.Article.dcm.yml**
-
-```
----
-Entity\Article:
-  type: entity
-  table: articles
-  id:
-    id:
-      type: integer
-      generator:
-        strategy: AUTO
-  fields:
-    title:
-      type: string
-      length: 64
-    createdBy:
-      type: string
-      gedmo:
-        blameable:
-          on: create
-    updatedBy:
-      type: string
-      gedmo:
-        blameable:
-          on: update
-```
-
 <a name="xml-mapping"></a>
 
 ## Xml mapping example
 
-``` xml
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
                   xmlns:gedmo="http://gediminasm.org/schemas/orm/doctrine-extensions-mapping">
@@ -449,7 +410,7 @@ Entity\Article:
 
 Add another entity which would represent Article Type:
 
-``` php
+```php
 <?php
 namespace Entity;
 
@@ -492,7 +453,7 @@ class Type
 
 Now update the Article Entity to reflect publishedBy on Type change:
 
-``` php
+```php
 <?php
 namespace Entity;
 
@@ -578,48 +539,9 @@ class Article
 }
 ```
 
-Yaml mapped Article: **/mapping/yaml/Entity.Article.dcm.yml**
-
-```
----
-Entity\Article:
-  type: entity
-  table: articles
-  id:
-    id:
-      type: integer
-      generator:
-        strategy: AUTO
-  fields:
-    title:
-      type: string
-      length: 64
-    createdBy:
-      type: string
-      gedmo:
-        blameable:
-          on: create
-    updatedBy:
-      type: string
-      gedmo:
-        blameable:
-          on: update
-    publishedBy:
-      type: string
-      gedmo:
-        blameable:
-          on: change
-          field: type.title
-          value: Published
-  manyToOne:
-    type:
-      targetEntity: Entity\Type
-      inversedBy: articles
-```
-
 Now few operations to get it all done:
 
-``` php
+```php
 <?php
 $article = new Article;
 $article->setTitle('My Article');
@@ -656,7 +578,7 @@ There is also a trait without annotations for easy integration purposes.
 **Note:** this feature is only available since php **5.4.0**. And you are not required
 to use the Traits provided by extensions.
 
-``` php
+```php
 <?php
 namespace Blameable\Fixture;
 

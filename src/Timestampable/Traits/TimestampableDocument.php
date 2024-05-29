@@ -14,15 +14,19 @@ use Doctrine\ODM\MongoDB\Types\Type;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
- * Timestampable Trait, usable with PHP >= 5.4
+ * Trait for timestampable objects.
+ *
+ * This implementation provides a mapping configuration for the Doctrine MongoDB ODM.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
 trait TimestampableDocument
 {
     /**
-     * @var \DateTime
+     * @var \DateTime|null
+     *
      * @Gedmo\Timestampable(on="create")
+     *
      * @ODM\Field(type="date")
      */
     #[Gedmo\Timestampable(on: 'create')]
@@ -30,8 +34,10 @@ trait TimestampableDocument
     protected $createdAt;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
+     *
      * @Gedmo\Timestampable(on="update")
+     *
      * @ODM\Field(type="date")
      */
     #[Gedmo\Timestampable(on: 'update')]
@@ -53,7 +59,7 @@ trait TimestampableDocument
     /**
      * Returns createdAt.
      *
-     * @return \DateTime
+     * @return \DateTime|null
      */
     public function getCreatedAt()
     {
@@ -75,7 +81,7 @@ trait TimestampableDocument
     /**
      * Returns updatedAt.
      *
-     * @return \Datetime
+     * @return \Datetime|null
      */
     public function getUpdatedAt()
     {

@@ -9,8 +9,8 @@
 
 namespace Gedmo\Mapping\Annotation;
 
-use Attribute;
 use Doctrine\Common\Annotations\Annotation;
+use Doctrine\Deprecations\Deprecation;
 use Gedmo\Mapping\Annotation\Annotation as GedmoAnnotation;
 
 /**
@@ -19,32 +19,46 @@ use Gedmo\Mapping\Annotation\Annotation as GedmoAnnotation;
  * @author Gustavo Falco <comfortablynumb84@gmail.com>
  *
  * @Annotation
+ *
  * @NamedArgumentConstructor
+ *
  * @Target("CLASS")
  */
-#[Attribute(Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS)]
 final class SoftDeleteable implements GedmoAnnotation
 {
-    /** @var string */
-    public $fieldName = 'deletedAt';
+    use ForwardCompatibilityTrait;
 
-    /** @var bool */
-    public $timeAware = false;
+    public string $fieldName = 'deletedAt';
 
-    /** @var bool */
-    public $hardDelete = true;
+    public bool $timeAware = false;
 
+    public bool $hardDelete = true;
+
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data = [], string $fieldName = 'deletedAt', bool $timeAware = false, bool $hardDelete = true)
     {
         if ([] !== $data) {
-            @trigger_error(sprintf(
+            Deprecation::trigger(
+                'gedmo/doctrine-extensions',
+                'https://github.com/doctrine-extensions/DoctrineExtensions/pull/2374',
                 'Passing an array as first argument to "%s()" is deprecated. Use named arguments instead.',
                 __METHOD__
-            ), E_USER_DEPRECATED);
+            );
+
+            $args = func_get_args();
+
+            $this->fieldName = $this->getAttributeValue($data, 'fieldName', $args, 1, $fieldName);
+            $this->timeAware = $this->getAttributeValue($data, 'timeAware', $args, 2, $timeAware);
+            $this->hardDelete = $this->getAttributeValue($data, 'hardDelete', $args, 3, $hardDelete);
+
+            return;
         }
 
-        $this->fieldName = $data['fieldName'] ?? $fieldName;
-        $this->timeAware = $data['timeAware'] ?? $timeAware;
-        $this->hardDelete = $data['hardDelete'] ?? $hardDelete;
+        $this->fieldName = $fieldName;
+        $this->timeAware = $timeAware;
+        $this->hardDelete = $hardDelete;
     }
 }

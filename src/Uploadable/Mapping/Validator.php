@@ -20,6 +20,8 @@ use Gedmo\Uploadable\FilenameGenerator\FilenameGeneratorInterface;
  *
  * @author Gustavo Falco <comfortablynumb84@gmail.com>
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class Validator
 {
@@ -42,7 +44,7 @@ class Validator
     /**
      * List of types which are valid for UploadableFileMimeType field
      *
-     * @var array
+     * @var string[]
      */
     public static $validFileMimeTypeTypes = [
         'string',
@@ -51,7 +53,7 @@ class Validator
     /**
      * List of types which are valid for UploadableFileName field
      *
-     * @var array
+     * @var string[]
      */
     public static $validFileNameTypes = [
         'string',
@@ -60,7 +62,7 @@ class Validator
     /**
      * List of types which are valid for UploadableFilePath field
      *
-     * @var array
+     * @var string[]
      */
     public static $validFilePathTypes = [
         'string',
@@ -69,7 +71,7 @@ class Validator
     /**
      * List of types which are valid for UploadableFileSize field for ORM
      *
-     * @var array
+     * @var string[]
      */
     public static $validFileSizeTypes = [
         'decimal',
@@ -78,7 +80,7 @@ class Validator
     /**
      * List of types which are valid for UploadableFileSize field for ODM
      *
-     * @var array
+     * @var string[]
      */
     public static $validFileSizeTypesODM = [
         'float',
@@ -92,26 +94,54 @@ class Validator
      */
     public static $validateWritableDirectory = true;
 
+    /**
+     * @param string $field
+     *
+     * @return void
+     */
     public static function validateFileNameField(ClassMetadata $meta, $field)
     {
         self::validateField($meta, $field, self::UPLOADABLE_FILE_NAME, self::$validFileNameTypes);
     }
 
+    /**
+     * @param string $field
+     *
+     * @return void
+     */
     public static function validateFileMimeTypeField(ClassMetadata $meta, $field)
     {
         self::validateField($meta, $field, self::UPLOADABLE_FILE_MIME_TYPE, self::$validFileMimeTypeTypes);
     }
 
+    /**
+     * @param string $field
+     *
+     * @return void
+     */
     public static function validateFilePathField(ClassMetadata $meta, $field)
     {
         self::validateField($meta, $field, self::UPLOADABLE_FILE_PATH, self::$validFilePathTypes);
     }
 
+    /**
+     * @param string $field
+     *
+     * @return void
+     */
     public static function validateFileSizeField(ClassMetadata $meta, $field)
     {
         self::validateField($meta, $field, self::UPLOADABLE_FILE_SIZE, self::$validFileSizeTypes);
     }
 
+    /**
+     * @param ClassMetadata $meta
+     * @param string        $field
+     * @param string        $uploadableField
+     * @param string[]      $validFieldTypes
+     *
+     * @return void
+     */
     public static function validateField($meta, $field, $uploadableField, $validFieldTypes)
     {
         if ($meta->isMappedSuperclass) {
@@ -127,6 +157,11 @@ class Validator
         }
     }
 
+    /**
+     * @param string $path
+     *
+     * @return void
+     */
     public static function validatePath($path)
     {
         if (!is_string($path) || '' === $path) {
@@ -142,10 +177,17 @@ class Validator
         }
 
         if (!is_writable($path)) {
-            throw new UploadableCantWriteException(sprintf('Directory "%s" does is not writable.', $path));
+            throw new UploadableCantWriteException(sprintf('Directory "%s" is not writable.', $path));
         }
     }
 
+    /**
+     * @param array<string, mixed> $config
+     *
+     * @return void
+     *
+     * @todo Stop receiving by reference the `$config` parameter and use `array` as return type declaration
+     */
     public static function validateConfiguration(ClassMetadata $meta, array &$config)
     {
         if (!$config['filePathField'] && !$config['fileNameField']) {
@@ -205,5 +247,7 @@ class Validator
                     throw new InvalidMappingException(sprintf('Class "%s" needs a valid value for filenameGenerator. It can be: SHA1, ALPHANUMERIC, NONE or a class implementing %s.', $meta->getName(), FilenameGeneratorInterface::class));
                 }
         }
+
+        return $config;
     }
 }

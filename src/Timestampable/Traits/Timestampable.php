@@ -10,19 +10,21 @@
 namespace Gedmo\Timestampable\Traits;
 
 /**
- * Timestampable Trait, usable with PHP >= 5.4
+ * Trait for timestampable objects.
+ *
+ * This implementation does not provide any mapping configurations.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
 trait Timestampable
 {
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      */
     protected $createdAt;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      */
     protected $updatedAt;
 
@@ -41,7 +43,7 @@ trait Timestampable
     /**
      * Returns createdAt.
      *
-     * @return \DateTime
+     * @return \DateTime|null
      */
     public function getCreatedAt()
     {
@@ -63,7 +65,7 @@ trait Timestampable
     /**
      * Returns updatedAt.
      *
-     * @return \DateTime
+     * @return \DateTime|null
      */
     public function getUpdatedAt()
     {

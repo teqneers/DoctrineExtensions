@@ -24,7 +24,7 @@ use Gedmo\Timestampable\TimestampableListener;
  */
 final class TimestampableEmbeddedDocumentTest extends BaseTestCaseMongoODM
 {
-    public const BOOK = Book::class;
+    private const BOOK = Book::class;
 
     protected function setUp(): void
     {
@@ -35,7 +35,7 @@ final class TimestampableEmbeddedDocumentTest extends BaseTestCaseMongoODM
         $this->getDefaultDocumentManager($evm);
     }
 
-    public function testPersistEmbeddedDocumentWithParent()
+    public function testPersistEmbeddedDocumentWithParent(): void
     {
         $tag1 = new Tag();
         $tag1->setName('cats');

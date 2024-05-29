@@ -35,33 +35,28 @@ class Comment implements Blameable
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="message", type="text")
      */
     #[ORM\Column(name: 'message', type: Types::TEXT)]
-    private $message;
+    private ?string $message = null;
 
     /**
-     * @var Article|null
-     *
      * @ORM\ManyToOne(targetEntity="Gedmo\Tests\Blameable\Fixture\Entity\Article", inversedBy="comments")
      */
     #[ORM\ManyToOne(targetEntity: Article::class, inversedBy: 'comments')]
-    private $article;
+    private ?Article $article = null;
 
     /**
-     * @var int|null
-     *
      * @ORM\Column(type="integer")
      */
     #[ORM\Column(type: Types::INTEGER)]
-    private $status;
+    private ?int $status = null;
 
     /**
      * @var string|null
      *
      * @ORM\Column(name="closed", type="string", nullable=true)
+     *
      * @Gedmo\Blameable(on="change", field="status", value=1)
      */
     #[ORM\Column(name: 'closed', type: Types::STRING, nullable: true)]
@@ -72,6 +67,7 @@ class Comment implements Blameable
      * @var string|null
      *
      * @ORM\Column(name="modified", type="string")
+     *
      * @Gedmo\Blameable(on="update")
      */
     #[ORM\Column(name: 'modified', type: Types::STRING)]

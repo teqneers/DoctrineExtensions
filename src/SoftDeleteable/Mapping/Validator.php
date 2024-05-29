@@ -17,13 +17,15 @@ use Gedmo\Exception\InvalidMappingException;
  *
  * @author Gustavo Falco <comfortablynumb84@gmail.com>
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class Validator
 {
     /**
      * List of types which are valid for timestamp
      *
-     * @var array
+     * @var string[]
      */
     public static $validTypes = [
         'date',
@@ -37,6 +39,11 @@ class Validator
         'timestamp',
     ];
 
+    /**
+     * @param mixed $field
+     *
+     * @return void
+     */
     public static function validateField(ClassMetadata $meta, $field)
     {
         if ($meta->isMappedSuperclass) {

@@ -12,9 +12,11 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Wrapper;
 
 use Doctrine\Common\EventManager;
-use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\Persistence\Proxy;
 use Gedmo\Tests\Tool\BaseTestCaseORM;
 use Gedmo\Tests\Wrapper\Fixture\Entity\Article;
+use Gedmo\Tests\Wrapper\Fixture\Entity\Composite;
+use Gedmo\Tests\Wrapper\Fixture\Entity\CompositeRelation;
 use Gedmo\Tool\Wrapper\EntityWrapper;
 
 /**
@@ -24,16 +26,18 @@ use Gedmo\Tool\Wrapper\EntityWrapper;
  */
 final class EntityWrapperTest extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
+    private const ARTICLE = Article::class;
+    private const COMPOSITE = Composite::class;
+    private const COMPOSITE_RELATION = CompositeRelation::class;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->getMockSqliteEntityManager(new EventManager());
+        $this->getDefaultMockSqliteEntityManager(new EventManager());
         $this->populate();
     }
 
-    public function testManaged()
+    public function testManaged(): void
     {
         $test = $this->em->find(self::ARTICLE, ['id' => 1]);
         static::assertInstanceOf(self::ARTICLE, $test);
@@ -47,7 +51,7 @@ final class EntityWrapperTest extends BaseTestCaseORM
         static::assertTrue($wrapped->hasValidIdentifier());
     }
 
-    public function testProxy()
+    public function testProxy(): void
     {
         $this->em->clear();
         $test = $this->em->getReference(self::ARTICLE, ['id' => 1]);
@@ -63,7 +67,48 @@ final class EntityWrapperTest extends BaseTestCaseORM
         static::assertSame('test', $wrapped->getPropertyValue('title'));
     }
 
-    public function testDetachedEntity()
+    public function testComposite(): void
+    {
+        $test = $this->em->getReference(self::COMPOSITE, ['one' => 1, 'two' => 2]);
+        static::assertInstanceOf(self::COMPOSITE, $test);
+        $wrapped = new EntityWrapper($test, $this->em);
+
+        $id = $wrapped->getIdentifier(false);
+        static::assertIsArray($id);
+        static::assertCount(2, $id);
+        static::assertArrayHasKey('one', $id);
+        static::assertArrayHasKey('two', $id);
+        static::assertSame(1, $id['one']);
+        static::assertSame(2, $id['two']);
+
+        $id = $wrapped->getIdentifier(false, true);
+        static::assertIsString($id);
+        static::assertSame('1 2', $id);
+
+        static::assertSame('test', $wrapped->getPropertyValue('title'));
+    }
+
+    public function testCompositeRelation(): void
+    {
+        $art1 = $this->em->getReference(self::ARTICLE, ['id' => 1]);
+        $test = $this->em->getReference(self::COMPOSITE_RELATION, ['article' => $art1->getId(), 'status' => 2]);
+        static::assertInstanceOf(self::COMPOSITE_RELATION, $test);
+        $wrapped = new EntityWrapper($test, $this->em);
+
+        $id = $wrapped->getIdentifier(false);
+        static::assertIsArray($id);
+        static::assertCount(2, $id);
+        static::assertArrayHasKey('article', $id);
+        static::assertArrayHasKey('status', $id);
+
+        $id = $wrapped->getIdentifier(false, true);
+        static::assertIsString($id);
+        static::assertSame('1 2', $id);
+
+        static::assertSame('test', $wrapped->getPropertyValue('title'));
+    }
+
+    public function testDetachedEntity(): void
     {
         $test = $this->em->find(self::ARTICLE, ['id' => 1]);
         $this->em->clear();
@@ -73,7 +118,7 @@ final class EntityWrapperTest extends BaseTestCaseORM
         static::assertSame('test', $wrapped->getPropertyValue('title'));
     }
 
-    public function testDetachedProxy()
+    public function testDetachedProxy(): void
     {
         $test = $this->em->getReference(self::ARTICLE, ['id' => 1]);
         $this->em->clear();
@@ -83,29 +128,59 @@ final class EntityWrapperTest extends BaseTestCaseORM
         static::assertSame('test', $wrapped->getPropertyValue('title'));
     }
 
-    public function testSomeFunctions()
+    public function testDetachedCompositeRelation(): void
+    {
+        $test = $this->em->getReference(self::COMPOSITE_RELATION, ['article' => 1, 'status' => 2]);
+        $this->em->clear();
+        $wrapped = new EntityWrapper($test, $this->em);
+
+        static::assertSame('1 2', $wrapped->getIdentifier(false, true));
+        static::assertSame('test', $wrapped->getPropertyValue('title'));
+    }
+
+    public function testCompositeRelationProxy(): void
+    {
+        $this->em->clear();
+        $art1 = $this->em->getReference(self::ARTICLE, ['id' => 1]);
+        $test = $this->em->getReference(self::COMPOSITE_RELATION, ['article' => $art1->getId(), 'status' => 2]);
+        static::assertInstanceOf(Proxy::class, $test);
+        $wrapped = new EntityWrapper($test, $this->em);
+
+        static::assertSame('1 2', $wrapped->getIdentifier(false, true));
+        static::assertSame('test', $wrapped->getPropertyValue('title'));
+    }
+
+    public function testSomeFunctions(): void
     {
         $test = new Article();
         $wrapped = new EntityWrapper($test, $this->em);
 
-        $wrapped->populate(['title' => 'test']);
+        $test->setTitle('test');
         static::assertSame('test', $wrapped->getPropertyValue('title'));
 
         static::assertFalse($wrapped->hasValidIdentifier());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,
+            self::COMPOSITE,
+            self::COMPOSITE_RELATION,
         ];
     }
 
     private function populate(): void
     {
-        $test = new Article();
-        $test->setTitle('test');
-        $this->em->persist($test);
+        $article = new Article();
+        $article->setTitle('test');
+        $this->em->persist($article);
+        $composite = new Composite(1, 2);
+        $composite->setTitle('test');
+        $this->em->persist($composite);
+        $compositeRelation = new CompositeRelation($article, 2);
+        $compositeRelation->setTitle('test');
+        $this->em->persist($compositeRelation);
         $this->em->flush();
     }
 }

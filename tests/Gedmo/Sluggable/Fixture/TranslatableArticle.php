@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Sluggable\Fixture;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -37,34 +38,34 @@ class TranslatableArticle implements Sluggable, Translatable
     private $id;
 
     /**
-     * @var string|null
-     *
      * @Gedmo\Translatable
+     *
      * @ORM\Column(type="string", length=64)
      */
     #[ORM\Column(type: Types::STRING, length: 64)]
     #[Gedmo\Translatable]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string|null
-     *
      * @Gedmo\Translatable
+     *
      * @ORM\Column(type="string", length=16)
      */
     #[ORM\Column(type: Types::STRING, length: 16)]
     #[Gedmo\Translatable]
-    private $code;
+    private ?string $code = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Translatable
      * @Gedmo\Slug(fields={"title", "code"})
+     *
      * @ORM\Column(type="string", length=128)
      */
     #[ORM\Column(type: Types::STRING, length: 128)]
     #[Gedmo\Translatable]
+    #[Gedmo\Slug(fields: ['title', 'code'])]
     private $slug;
 
     /**
@@ -76,21 +77,22 @@ class TranslatableArticle implements Sluggable, Translatable
     private $comments;
 
     /**
-     * @var Page|null
-     *
      * @ORM\ManyToOne(targetEntity="Page", inversedBy="articles")
      */
     #[ORM\ManyToOne(targetEntity: Page::class, inversedBy: 'articles')]
-    private $page;
+    private ?Page $page = null;
 
     /**
-     * @var string|null
-     *
      * @Gedmo\Locale
      * Used locale to override Translation listener`s locale
      */
     #[Gedmo\Language]
-    private $locale;
+    private ?string $locale = null;
+
+    public function __construct()
+    {
+        $this->comments = new ArrayCollection();
+    }
 
     public function addComment(Comment $comment): void
     {

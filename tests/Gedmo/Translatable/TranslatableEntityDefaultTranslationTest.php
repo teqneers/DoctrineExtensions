@@ -14,7 +14,6 @@ namespace Gedmo\Tests\Translatable;
 use Doctrine\Common\EventManager;
 use Gedmo\Tests\Tool\BaseTestCaseORM;
 use Gedmo\Tests\Translatable\Fixture\Article;
-use Gedmo\Tests\Translatable\Fixture\Comment;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Gedmo\Translatable\Entity\Translation;
 use Gedmo\Translatable\TranslatableListener;
@@ -26,14 +25,10 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const COMMENT = Comment::class;
-    public const TRANSLATION = Translation::class;
+    private const ARTICLE = Article::class;
+    private const TRANSLATION = Translation::class;
 
-    /**
-     * @var TranslatableListener
-     */
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     /**
      * @var TranslationRepository
@@ -50,14 +45,6 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         $this->translatableListener->setDefaultLocale('defaultLocale');
         $evm->addEventSubscriber($this->translatableListener);
 
-        $conn = [
-            'driver' => 'pdo_mysql',
-            'host' => '127.0.0.1',
-            'dbname' => 'test',
-            'user' => 'root',
-            'password' => 'nimda',
-        ];
-        //$this->getMockCustomEntityManager($conn, $evm);
         $this->getDefaultMockSqliteEntityManager($evm);
 
         $this->repo = $this->em->getRepository(self::TRANSLATION);
@@ -66,7 +53,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
     // --- Tests for default translation overruling the translated entity
     //     property ------------------------------------------------------------
 
-    public function testTranslatedPropertyWithoutPersistingDefault()
+    public function testTranslatedPropertyWithoutPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -77,7 +64,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title translatedLocale', $entity->getTitle());
     }
 
-    public function testTranslatedPropertyWithoutPersistingDefaultResorted()
+    public function testTranslatedPropertyWithoutPersistingDefaultResorted(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -88,7 +75,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title translatedLocale', $entity->getTitle());
     }
 
-    public function testTranslatedPropertyWithPersistingDefault()
+    public function testTranslatedPropertyWithPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -99,7 +86,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title translatedLocale', $entity->getTitle());
     }
 
-    public function testTranslatedPropertyWithPersistingDefaultResorted()
+    public function testTranslatedPropertyWithPersistingDefaultResorted(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -113,7 +100,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
     // --- Tests for default translation making it into the entity's
     //     database row --------------------------------------------------------
 
-    public function testOnlyDefaultTranslationWithoutPersistingDefault()
+    public function testOnlyDefaultTranslationWithoutPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -133,7 +120,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title defaultLocale', $articles[0]['title']);
     }
 
-    public function testOnlyDefaultTranslationWithPersistingDefault()
+    public function testOnlyDefaultTranslationWithPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -154,7 +141,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title defaultLocale', $articles[0]['title']);
     }
 
-    public function testUpdateTranslationInDefaultLocale()
+    public function testUpdateTranslationInDefaultLocale(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -185,7 +172,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('update title defaultLocale', $fields[0]['title']);
     }
 
-    public function testUpdateTranslationWithPersistingInDefaultLocale()
+    public function testUpdateTranslationWithPersistingInDefaultLocale(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -220,7 +207,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
      * As this test does not provide a default translation, we assert
      * that a translated value is picked as default value
      */
-    public function testOnlyEntityTranslationWithoutPersistingDefault()
+    public function testOnlyEntityTranslationWithoutPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -245,7 +232,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
      * As this test does not provide a default translation, we assert
      * that a translated value is picked as default value
      */
-    public function testOnlyEntityTranslationWithPersistingDefault()
+    public function testOnlyEntityTranslationWithPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -266,7 +253,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title translatedLocale', $articles[0]['title']);
     }
 
-    public function testDefaultAndEntityTranslationWithoutPersistingDefault()
+    public function testDefaultAndEntityTranslationWithoutPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -288,7 +275,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title defaultLocale', $articles[0]['title']);
     }
 
-    public function testDefaultAndEntityTranslationWithoutPersistingDefaultResorted()
+    public function testDefaultAndEntityTranslationWithoutPersistingDefaultResorted(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -310,7 +297,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title defaultLocale', $articles[0]['title']);
     }
 
-    public function testDefaultAndEntityTranslationWithPersistingDefault()
+    public function testDefaultAndEntityTranslationWithPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -333,7 +320,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title defaultLocale', $articles[0]['title']);
     }
 
-    public function testDefaultAndEntityTranslationWithPersistingDefaultResorted()
+    public function testDefaultAndEntityTranslationWithPersistingDefaultResorted(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -356,7 +343,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('title defaultLocale', $articles[0]['title']);
     }
 
-    public function testTwoFieldsWithoutPersistingDefault()
+    public function testTwoFieldsWithoutPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -382,7 +369,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('content defaultLocale', $articles[0]['content']);
     }
 
-    public function testTwoFieldsWithoutPersistingDefaultResorted()
+    public function testTwoFieldsWithoutPersistingDefaultResorted(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(false);
         $entity = new Article();
@@ -408,7 +395,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('content defaultLocale', $articles[0]['content']);
     }
 
-    public function testTwoFieldsWithPersistingDefault()
+    public function testTwoFieldsWithPersistingDefault(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -436,7 +423,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
         static::assertSame('content defaultLocale', $articles[0]['content']);
     }
 
-    public function testTwoFieldsWithPersistingDefaultResorted()
+    public function testTwoFieldsWithPersistingDefaultResorted(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $entity = new Article();
@@ -466,7 +453,7 @@ final class TranslatableEntityDefaultTranslationTest extends BaseTestCaseORM
 
     // --- Fixture related methods ---------------------------------------------
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,

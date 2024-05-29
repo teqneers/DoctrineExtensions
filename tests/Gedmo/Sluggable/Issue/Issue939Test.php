@@ -9,7 +9,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Sluggable;
+namespace Gedmo\Tests\Sluggable\Issue;
 
 use Doctrine\Common\EventManager;
 use Gedmo\Tests\Sluggable\Fixture\Issue939\Article;
@@ -24,8 +24,8 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class Issue939Test extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const CATEGORY = Category::class;
+    private const ARTICLE = Article::class;
+    private const CATEGORY = Category::class;
 
     protected function setUp(): void
     {
@@ -34,10 +34,10 @@ final class Issue939Test extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new SluggableListenerIssue939());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testSlugGeneration()
+    public function testSlugGeneration(): void
     {
         $category = new Category();
         $category->setTitle('Misc articles');
@@ -54,7 +54,7 @@ final class Issue939Test extends BaseTestCaseORM
         static::assertSame('misc-articles', $category->getSlug());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,

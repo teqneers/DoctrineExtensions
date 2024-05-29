@@ -9,6 +9,7 @@
 
 namespace Gedmo\Timestampable\Mapping\Driver;
 
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Gedmo\Exception\InvalidMappingException;
 use Gedmo\Mapping\Driver\Xml as BaseXml;
 
@@ -20,15 +21,17 @@ use Gedmo\Mapping\Driver\Xml as BaseXml;
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  * @author Miha Vrhovnik <miha.vrhovnik@gmail.com>
+ *
+ * @internal
  */
 class Xml extends BaseXml
 {
     /**
      * List of types which are valid for timestamp
      *
-     * @var array
+     * @var string[]
      */
-    private $validTypes = [
+    private const VALID_TYPES = [
         'date',
         'date_immutable',
         'time',
@@ -42,9 +45,6 @@ class Xml extends BaseXml
         'integer',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         /**
@@ -79,9 +79,6 @@ class Xml extends BaseXml
                         }
                         $trackedFieldAttribute = $this->_getAttribute($data, 'field');
                         $valueAttribute = $this->_isAttributeSet($data, 'value') ? $this->_getAttribute($data, 'value') : null;
-                        if (is_array($trackedFieldAttribute) && null !== $valueAttribute) {
-                            throw new InvalidMappingException('Timestampable extension does not support multiple value changeset detection yet.');
-                        }
                         $field = [
                             'field' => $field,
                             'trackedField' => $trackedFieldAttribute,
@@ -92,13 +89,15 @@ class Xml extends BaseXml
                 }
             }
         }
+
+        return $config;
     }
 
     /**
      * Checks if $field type is valid
      *
-     * @param object $meta
-     * @param string $field
+     * @param ClassMetadata $meta
+     * @param string        $field
      *
      * @return bool
      */
@@ -106,6 +105,6 @@ class Xml extends BaseXml
     {
         $mapping = $meta->getFieldMapping($field);
 
-        return $mapping && in_array($mapping['type'], $this->validTypes, true);
+        return $mapping && in_array($mapping['type'], self::VALID_TYPES, true);
     }
 }

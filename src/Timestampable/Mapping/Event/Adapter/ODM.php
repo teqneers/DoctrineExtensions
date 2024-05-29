@@ -9,8 +9,11 @@
 
 namespace Gedmo\Timestampable\Mapping\Event\Adapter;
 
+use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
 use Gedmo\Mapping\Event\Adapter\ODM as BaseAdapterODM;
+use Gedmo\Mapping\Event\ClockAwareAdapterInterface;
 use Gedmo\Timestampable\Mapping\Event\TimestampableAdapter;
+use Psr\Clock\ClockInterface;
 
 /**
  * Doctrine event adapter for ODM adapted
@@ -18,22 +21,35 @@ use Gedmo\Timestampable\Mapping\Event\TimestampableAdapter;
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
-final class ODM extends BaseAdapterODM implements TimestampableAdapter
+final class ODM extends BaseAdapterODM implements TimestampableAdapter, ClockAwareAdapterInterface
 {
     /**
-     * {@inheritdoc}
+     * @var ClockInterface|null
+     */
+    private ?ClockInterface $clock = null;
+
+    public function setClock(ClockInterface $clock): void
+    {
+        $this->clock = $clock;
+    }
+
+    /**
+     * @param ClassMetadata $meta
      */
     public function getDateValue($meta, $field)
     {
+        $datetime = $this->clock instanceof ClockInterface ? $this->clock->now() : new \DateTimeImmutable();
         $mapping = $meta->getFieldMapping($field);
-        if (isset($mapping['type']) && 'timestamp' === $mapping['type']) {
-            return time();
-        }
-        if (isset($mapping['type']) && in_array($mapping['type'], ['date_immutable', 'time_immutable', 'datetime_immutable', 'datetimetz_immutable'], true)) {
-            return new \DateTimeImmutable();
+        $type = $mapping['type'] ?? null;
+
+        if ('timestamp' === $type) {
+            return (int) $datetime->format('U');
         }
 
-        return \DateTime::createFromFormat('U.u', number_format(microtime(true), 6, '.', ''))
-            ->setTimeZone(new \DateTimeZone(date_default_timezone_get()));
+        if (in_array($type, ['date_immutable', 'time_immutable', 'datetime_immutable', 'datetimetz_immutable'], true)) {
+            return $datetime;
+        }
+
+        return \DateTime::createFromImmutable($datetime);
     }
 }

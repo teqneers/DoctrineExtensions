@@ -9,6 +9,7 @@
 
 namespace Gedmo\Tree;
 
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
 use Gedmo\Mapping\Event\AdapterInterface;
 
@@ -45,7 +46,9 @@ interface Strategy
      * Operations after metadata is loaded
      *
      * @param ObjectManager $om
-     * @param object        $meta
+     * @param ClassMetadata $meta
+     *
+     * @return void
      */
     public function processMetadataLoad($om, $meta);
 
@@ -53,7 +56,7 @@ interface Strategy
      * Operations on tree node insertion
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -63,7 +66,7 @@ interface Strategy
      * Operations on tree node updates
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -73,7 +76,7 @@ interface Strategy
      * Operations on tree node delete
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -83,7 +86,7 @@ interface Strategy
      * Operations on tree node removal
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -93,7 +96,7 @@ interface Strategy
      * Operations on tree node persist
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -103,7 +106,7 @@ interface Strategy
      * Operations on tree node update
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -113,7 +116,7 @@ interface Strategy
      * Operations on tree node insertions
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -123,7 +126,7 @@ interface Strategy
      * Operations on tree node updates
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */
@@ -133,7 +136,7 @@ interface Strategy
      * Operations on tree node removals
      *
      * @param ObjectManager $om
-     * @param object        $object
+     * @param object|Node   $object
      *
      * @return void
      */

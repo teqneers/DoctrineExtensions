@@ -9,40 +9,58 @@
 
 namespace Gedmo\Mapping\Annotation;
 
-use Attribute;
 use Doctrine\Common\Annotations\Annotation;
+use Doctrine\Deprecations\Deprecation;
 use Gedmo\Mapping\Annotation\Annotation as GedmoAnnotation;
 
 /**
  * Blameable annotation for Blameable behavioral extension
  *
  * @Annotation
+ *
  * @NamedArgumentConstructor
+ *
  * @Target("PROPERTY")
  *
  * @author David Buchmann <mail@davidbu.ch>
  */
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_PROPERTY)]
 final class Blameable implements GedmoAnnotation
 {
-    /** @var string */
-    public $on = 'update';
-    /** @var string|array */
+    use ForwardCompatibilityTrait;
+
+    public string $on = 'update';
+    /** @var string|string[] */
     public $field;
     /** @var mixed */
     public $value;
 
+    /**
+     * @param array<string, mixed> $data
+     * @param string|string[]|null $field
+     * @param mixed                $value
+     */
     public function __construct(array $data = [], string $on = 'update', $field = null, $value = null)
     {
         if ([] !== $data) {
-            @trigger_error(sprintf(
+            Deprecation::trigger(
+                'gedmo/doctrine-extensions',
+                'https://github.com/doctrine-extensions/DoctrineExtensions/pull/2375',
                 'Passing an array as first argument to "%s()" is deprecated. Use named arguments instead.',
                 __METHOD__
-            ), E_USER_DEPRECATED);
+            );
+
+            $args = func_get_args();
+
+            $this->on = $this->getAttributeValue($data, 'on', $args, 1, $on);
+            $this->field = $this->getAttributeValue($data, 'field', $args, 2, $field);
+            $this->value = $this->getAttributeValue($data, 'value', $args, 3, $value);
+
+            return;
         }
 
-        $this->on = $data['on'] ?? $on;
-        $this->field = $data['field'] ?? $field;
-        $this->value = $data['value'] ?? $value;
+        $this->on = $on;
+        $this->field = $field;
+        $this->value = $value;
     }
 }

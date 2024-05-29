@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Mapping\Xml;
 
 use Doctrine\Common\EventManager;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\XmlDriver;
 use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Gedmo\Tests\Mapping\Fixture\Xml\NestedTree;
@@ -25,15 +26,9 @@ use Gedmo\Tree\TreeListener;
  */
 final class NestedTreeMappingTest extends BaseTestCaseOM
 {
-    /**
-     * @var \Doctrine\ORM\EntityManager
-     */
-    private $em;
+    private EntityManager $em;
 
-    /**
-     * @var TreeListener
-     */
-    private $tree;
+    private TreeListener $tree;
 
     protected function setUp(): void
     {
@@ -48,12 +43,12 @@ final class NestedTreeMappingTest extends BaseTestCaseOM
         $this->evm = new EventManager();
         $this->evm->addEventSubscriber($this->tree);
 
-        $this->em = $this->getMockSqliteEntityManager([
+        $this->em = $this->getDefaultMockSqliteEntityManager([
             NestedTree::class,
         ], $chain);
     }
 
-    public function testTreeMetadata()
+    public function testTreeMetadata(): void
     {
         $meta = $this->em->getClassMetadata(NestedTree::class);
         $config = $this->tree->getConfiguration($this->em, $meta->getName());

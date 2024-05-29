@@ -69,8 +69,10 @@ class Position
      * @var string|null
      *
      * @Gedmo\Slug(fields={"code", "other", "title", "prop"})
+     *
      * @ORM\Column(length=64, unique=true)
      */
+    #[Gedmo\Slug(fields: ['code', 'other', 'title', 'prop'])]
     #[ORM\Column(length: 64, unique: true)]
     private $slug;
 }

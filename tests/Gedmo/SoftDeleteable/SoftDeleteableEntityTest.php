@@ -11,14 +11,13 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\SoftDeleteable;
 
-use function class_exists;
-use Doctrine\Common\Cache\ArrayCache;
-use Doctrine\Common\Cache\Psr6\CacheAdapter;
 use Doctrine\Common\EventManager;
-use Doctrine\Common\EventSubscriber;
+use Doctrine\ORM\Event\LifecycleEventArgs;
+use Doctrine\ORM\Query;
 use Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter;
 use Gedmo\SoftDeleteable\Query\TreeWalker\SoftDeleteableWalker;
 use Gedmo\SoftDeleteable\SoftDeleteableListener;
+use Gedmo\Tests\Clock;
 use Gedmo\Tests\SoftDeleteable\Fixture\Entity\Article;
 use Gedmo\Tests\SoftDeleteable\Fixture\Entity\Child;
 use Gedmo\Tests\SoftDeleteable\Fixture\Entity\Comment;
@@ -29,7 +28,11 @@ use Gedmo\Tests\SoftDeleteable\Fixture\Entity\OtherComment;
 use Gedmo\Tests\SoftDeleteable\Fixture\Entity\Page;
 use Gedmo\Tests\SoftDeleteable\Fixture\Entity\User;
 use Gedmo\Tests\SoftDeleteable\Fixture\Entity\UserNoHardDelete;
+use Gedmo\Tests\SoftDeleteable\Fixture\Listener\WithLifecycleEventArgsFromORMTypeListener;
+use Gedmo\Tests\SoftDeleteable\Fixture\Listener\WithoutTypeListener;
+use Gedmo\Tests\SoftDeleteable\Fixture\Listener\WithPreAndPostSoftDeleteEventArgsTypeListener;
 use Gedmo\Tests\Tool\BaseTestCaseORM;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 /**
  * These are tests for SoftDeleteable behavior
@@ -40,22 +43,19 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class SoftDeleteableEntityTest extends BaseTestCaseORM
 {
-    public const ARTICLE_CLASS = Article::class;
-    public const COMMENT_CLASS = Comment::class;
-    public const PAGE_CLASS = Page::class;
-    public const MEGA_PAGE_CLASS = MegaPage::class;
-    public const MODULE_CLASS = Module::class;
-    public const OTHER_ARTICLE_CLASS = OtherArticle::class;
-    public const OTHER_COMMENT_CLASS = OtherComment::class;
-    public const USER_CLASS = User::class;
-    public const MAPPED_SUPERCLASS_CHILD_CLASS = Child::class;
-    public const SOFT_DELETEABLE_FILTER_NAME = 'soft-deleteable';
-    public const USER_NO_HARD_DELETE_CLASS = UserNoHardDelete::class;
+    private const ARTICLE_CLASS = Article::class;
+    private const COMMENT_CLASS = Comment::class;
+    private const PAGE_CLASS = Page::class;
+    private const MEGA_PAGE_CLASS = MegaPage::class;
+    private const MODULE_CLASS = Module::class;
+    private const OTHER_ARTICLE_CLASS = OtherArticle::class;
+    private const OTHER_COMMENT_CLASS = OtherComment::class;
+    private const USER_CLASS = User::class;
+    private const MAPPED_SUPERCLASS_CHILD_CLASS = Child::class;
+    private const SOFT_DELETEABLE_FILTER_NAME = 'soft-deleteable';
+    private const USER_NO_HARD_DELETE_CLASS = UserNoHardDelete::class;
 
-    /**
-     * @var SoftDeleteableListener
-     */
-    private $softDeleteableListener;
+    private SoftDeleteableListener $softDeleteableListener;
 
     protected function setUp(): void
     {
@@ -63,17 +63,15 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
 
         $evm = new EventManager();
         $this->softDeleteableListener = new SoftDeleteableListener();
+        $this->softDeleteableListener->setClock(new Clock());
         $evm->addEventSubscriber($this->softDeleteableListener);
         $config = $this->getDefaultConfiguration();
         $config->addFilter(self::SOFT_DELETEABLE_FILTER_NAME, SoftDeleteableFilter::class);
-        $this->em = $this->getMockSqliteEntityManager($evm, $config);
+        $this->em = $this->getDefaultMockSqliteEntityManager($evm, $config);
         $this->em->getFilters()->enable(self::SOFT_DELETEABLE_FILTER_NAME);
     }
 
-    /**
-     * @test
-     */
-    public function shouldBeAbleToHardDeleteSoftdeletedItems(): void
+    public function testShouldBeAbleToHardDeleteSoftdeletedItems(): void
     {
         $repo = $this->em->getRepository(self::USER_CLASS);
 
@@ -93,10 +91,7 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
         static::assertNull($user);
     }
 
-    /**
-     * @test
-     */
-    public function shouldSoftlyDeleteIfColumnNameDifferFromPropertyName(): void
+    public function testShouldSoftlyDeleteIfColumnNameDifferFromPropertyName(): void
     {
         $repo = $this->em->getRepository(self::USER_CLASS);
 
@@ -184,7 +179,7 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
         $query = $this->em->createQuery($dql);
         $query->setParameter($field, $value);
         $query->setHint(
-            \Doctrine\ORM\Query::HINT_CUSTOM_OUTPUT_WALKER,
+            Query::HINT_CUSTOM_OUTPUT_WALKER,
             SoftDeleteableWalker::class
         );
 
@@ -222,7 +217,7 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
             self::PAGE_CLASS);
         $query = $this->em->createQuery($dql);
         $query->setHint(
-            \Doctrine\ORM\Query::HINT_CUSTOM_OUTPUT_WALKER,
+            Query::HINT_CUSTOM_OUTPUT_WALKER,
             SoftDeleteableWalker::class
         );
 
@@ -340,7 +335,7 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
         $query = $this->em->createQuery($dql);
         $query->setParameter($field, $value);
         $query->setHint(
-            \Doctrine\ORM\Query::HINT_CUSTOM_OUTPUT_WALKER,
+            Query::HINT_CUSTOM_OUTPUT_WALKER,
             SoftDeleteableWalker::class
         );
 
@@ -378,7 +373,7 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
             self::PAGE_CLASS);
         $query = $this->em->createQuery($dql);
         $query->setHint(
-            \Doctrine\ORM\Query::HINT_CUSTOM_OUTPUT_WALKER,
+            Query::HINT_CUSTOM_OUTPUT_WALKER,
             SoftDeleteableWalker::class
         );
 
@@ -494,16 +489,9 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
         static::assertNull($user);
     }
 
-    /**
-     * @test
-     */
-    public function shouldFilterBeQueryCachedCorrectlyWhenToggledForEntity(): void
+    public function testShouldFilterBeQueryCachedCorrectlyWhenToggledForEntity(): void
     {
-        if (!class_exists(ArrayCache::class)) {
-            static::markTestSkipped('Test only applies when doctrine/cache 1.x is installed');
-        }
-
-        $this->em->getConfiguration()->setQueryCache(CacheAdapter::wrap(new ArrayCache()));
+        $this->em->getConfiguration()->setQueryCache(new ArrayAdapter());
 
         $filter = $this->em->getFilters()->enable(self::SOFT_DELETEABLE_FILTER_NAME);
         static::assertInstanceOf(SoftDeleteableFilter::class, $filter);
@@ -546,60 +534,24 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
 
     public function testPostSoftDeleteEventIsDispatched(): void
     {
-        $subscriber = $this->getMockBuilder(EventSubscriber::class)
-            ->setMethods([
-                'getSubscribedEvents',
-                'preSoftDelete',
-                'postSoftDelete',
-            ])
-            ->getMock();
+        $this->em->getEventManager()->addEventSubscriber(new WithPreAndPostSoftDeleteEventArgsTypeListener());
 
-        $subscriber->expects(static::once())
-                   ->method('getSubscribedEvents')
-                   ->willReturn([
-                       SoftDeleteableListener::PRE_SOFT_DELETE,
-                       SoftDeleteableListener::POST_SOFT_DELETE,
-                   ]);
-
-        $subscriber->expects(static::exactly(2))
-                   ->method('preSoftDelete')
-                   ->with(static::anything());
-
-        $subscriber->expects(static::exactly(2))
-                   ->method('postSoftDelete')
-                   ->with(static::anything());
-
-        $this->em->getEventManager()->addEventSubscriber($subscriber);
-
-        $repo = $this->em->getRepository(self::ARTICLE_CLASS);
-        $commentRepo = $this->em->getRepository(self::COMMENT_CLASS);
-
-        $comment = new Comment();
-        $commentField = 'comment';
-        $commentValue = 'Comment 1';
-        $comment->setComment($commentValue);
-        $art0 = new Article();
-        $field = 'title';
-        $value = 'Title 1';
-        $art0->setTitle($value);
-        $art0->addComment($comment);
-
-        $this->em->persist($art0);
-        $this->em->flush();
-
-        $art = $repo->findOneBy([$field => $value]);
-
-        static::assertNull($art->getDeletedAt());
-        static::assertNull($comment->getDeletedAt());
-
-        $this->em->remove($art);
-        $this->em->flush();
+        $this->doTestPostSoftDeleteEventIsDispatched();
     }
 
-    /**
-     * @test
-     */
-    public function shouldNotDeleteIfColumnNameDifferFromPropertyName(): void
+    /** @group legacy */
+    public function testPostSoftDeleteEventIsDispatchedWithDeprecatedListeners(): void
+    {
+        $this->em->getEventManager()->addEventSubscriber(new WithoutTypeListener());
+
+        if (class_exists(LifecycleEventArgs::class)) {
+            $this->em->getEventManager()->addEventSubscriber(new WithLifecycleEventArgsFromORMTypeListener());
+        }
+
+        $this->doTestPostSoftDeleteEventIsDispatched();
+    }
+
+    public function testShouldNotDeleteIfColumnNameDifferFromPropertyName(): void
     {
         $repo = $this->em->getRepository(self::USER_NO_HARD_DELETE_CLASS);
 
@@ -646,5 +598,30 @@ final class SoftDeleteableEntityTest extends BaseTestCaseORM
             self::MAPPED_SUPERCLASS_CHILD_CLASS,
             self::USER_NO_HARD_DELETE_CLASS,
         ];
+    }
+
+    private function doTestPostSoftDeleteEventIsDispatched(): void
+    {
+        $repo = $this->em->getRepository(self::ARTICLE_CLASS);
+
+        $comment = new Comment();
+        $commentValue = 'Comment 1';
+        $comment->setComment($commentValue);
+        $art0 = new Article();
+        $field = 'title';
+        $value = 'Title 1';
+        $art0->setTitle($value);
+        $art0->addComment($comment);
+
+        $this->em->persist($art0);
+        $this->em->flush();
+
+        $art = $repo->findOneBy([$field => $value]);
+
+        static::assertNull($art->getDeletedAt());
+        static::assertNull($comment->getDeletedAt());
+
+        $this->em->remove($art);
+        $this->em->flush();
     }
 }

@@ -9,7 +9,6 @@
 
 namespace Gedmo\Sluggable\Mapping\Event\Adapter;
 
-use Doctrine\ODM\MongoDB\Iterator\Iterator;
 use Gedmo\Mapping\Event\Adapter\ODM as BaseAdapterODM;
 use Gedmo\Sluggable\Mapping\Event\SluggableAdapter;
 use Gedmo\Tool\Wrapper\AbstractWrapper;
@@ -23,9 +22,6 @@ use MongoDB\BSON\Regex;
  */
 final class ODM extends BaseAdapterODM implements SluggableAdapter
 {
-    /**
-     * {@inheritdoc}
-     */
     public function getSimilarSlugs($object, $meta, array $config, $slug)
     {
         $dm = $this->getObjectManager();
@@ -50,12 +46,7 @@ final class ODM extends BaseAdapterODM implements SluggableAdapter
         $q = $qb->getQuery();
         $q->setHydrate(false);
 
-        $result = $q->execute();
-        if ($result instanceof Iterator) {
-            $result = $result->toArray();
-        }
-
-        return $result;
+        return $q->getIterator()->toArray();
     }
 
     /**
@@ -77,14 +68,11 @@ final class ODM extends BaseAdapterODM implements SluggableAdapter
             ->getQuery()
         ;
         $q->setHydrate(false);
-        $result = $q->execute();
+        $result = $q->getIterator();
+        $count = 0;
 
-        if (!$result instanceof Iterator) {
-            return 0;
-        }
-
-        $result = $result->toArray();
         foreach ($result as $targetObject) {
+            ++$count;
             $slug = preg_replace("@^{$target}@smi", $replacement.$config['pathSeparator'], $targetObject[$config['slug']]);
             $dm
                 ->createQueryBuilder()
@@ -96,7 +84,7 @@ final class ODM extends BaseAdapterODM implements SluggableAdapter
             ;
         }
 
-        return count($result);
+        return $count;
     }
 
     /**
@@ -116,14 +104,11 @@ final class ODM extends BaseAdapterODM implements SluggableAdapter
             ->getQuery()
         ;
         $q->setHydrate(false);
-        $result = $q->execute();
+        $result = $q->getIterator();
+        $count = 0;
 
-        if (!$result instanceof Iterator) {
-            return 0;
-        }
-
-        $result = $result->toArray();
         foreach ($result as $targetObject) {
+            ++$count;
             $slug = preg_replace("@^{$replacement}@smi", $target, $targetObject[$config['slug']]);
             $dm
                 ->createQueryBuilder()
@@ -135,6 +120,6 @@ final class ODM extends BaseAdapterODM implements SluggableAdapter
             ;
         }
 
-        return count($result);
+        return $count;
     }
 }

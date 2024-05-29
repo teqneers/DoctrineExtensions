@@ -10,6 +10,7 @@
 namespace Gedmo\Tree\Entity\Repository;
 
 use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
 use Gedmo\Exception\InvalidArgumentException;
 use Gedmo\Tool\Wrapper\EntityWrapper;
 use Gedmo\Tree\Entity\MappedSuperclass\AbstractClosure;
@@ -22,42 +23,44 @@ use Gedmo\Tree\Strategy;
  *
  * @author Gustavo Adrian <comfortablynumb84@gmail.com>
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @template T of object
+ *
+ * @template-extends AbstractTreeRepository<T>
  */
 class ClosureTreeRepository extends AbstractTreeRepository
 {
     /** Alias for the level value used in the subquery of the getNodesHierarchy method */
     public const SUBQUERY_LEVEL = 'level';
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRootNodesQueryBuilder($sortByField = null, $direction = 'asc')
     {
         $meta = $this->getClassMetadata();
-        $config = $this->listener->getConfiguration($this->_em, $meta->getName());
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $meta->getName());
         $qb = $this->getQueryBuilder();
         $qb->select('node')
             ->from($config['useObjectClass'], 'node')
             ->where('node.'.$config['parent'].' IS NULL');
 
-        if ($sortByField) {
-            $qb->orderBy('node.'.$sortByField, 'asc' === strtolower($direction) ? 'asc' : 'desc');
+        if (null !== $sortByField) {
+            $sortByField = (array) $sortByField;
+            $direction = (array) $direction;
+            foreach ($sortByField as $key => $field) {
+                $fieldDirection = $direction[$key] ?? 'asc';
+                if ($meta->hasField($field) || $meta->isSingleValuedAssociation($field)) {
+                    $qb->addOrderBy('node.'.$field, 'asc' === strtolower($fieldDirection) ? 'asc' : 'desc');
+                }
+            }
         }
 
         return $qb;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRootNodesQuery($sortByField = null, $direction = 'asc')
     {
         return $this->getRootNodesQueryBuilder($sortByField, $direction)->getQuery();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRootNodes($sortByField = null, $direction = 'asc')
     {
         return $this->getRootNodesQuery($sortByField, $direction)->getResult();
@@ -78,18 +81,18 @@ class ClosureTreeRepository extends AbstractTreeRepository
         if (!is_a($node, $meta->getName())) {
             throw new InvalidArgumentException('Node is not related to this repository');
         }
-        if (!$this->_em->getUnitOfWork()->isInIdentityMap($node)) {
+        if (!$this->getEntityManager()->getUnitOfWork()->isInIdentityMap($node)) {
             throw new InvalidArgumentException('Node is not managed by UnitOfWork');
         }
-        $config = $this->listener->getConfiguration($this->_em, $meta->getName());
-        $closureMeta = $this->_em->getClassMetadata($config['closure']);
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $meta->getName());
+        $closureMeta = $this->getEntityManager()->getClassMetadata($config['closure']);
 
         $dql = "SELECT c, node FROM {$closureMeta->getName()} c";
         $dql .= ' INNER JOIN c.ancestor node';
         $dql .= ' WHERE c.descendant = :node';
         $dql .= ' ORDER BY c.depth DESC';
-        $q = $this->_em->createQuery($dql);
-        $q->setParameters(compact('node'));
+        $q = $this->getEntityManager()->createQuery($dql);
+        $q->setParameter('node', $node);
 
         return $q;
     }
@@ -99,27 +102,33 @@ class ClosureTreeRepository extends AbstractTreeRepository
      *
      * @param object $node
      *
-     * @return array list of Nodes in path
+     * @return array<int, object|null> list of Nodes in path
      */
     public function getPath($node)
     {
-        return array_map(static function (AbstractClosure $closure) {
-            return $closure->getAncestor();
-        }, $this->getPathQuery($node)->getResult());
+        return array_map(static fn (AbstractClosure $closure) => $closure->getAncestor(), $this->getPathQuery($node)->getResult());
     }
 
     /**
-     * @see getChildrenQueryBuilder
+     * @param object|null          $node        If null, all tree nodes will be taken
+     * @param bool                 $direct      True to take only direct children
+     * @param string|string[]|null $sortByField Field name or array of fields names to sort by
+     * @param string|string[]      $direction   Sort order ('asc'|'desc'|'ASC'|'DESC'). If $sortByField is an array, this may also be an array with matching number of elements
+     * @param bool                 $includeNode Include the root node in results?
+     *
+     * @return QueryBuilder QueryBuilder object
+     *
+     * @phpstan-param 'asc'|'desc'|'ASC'|'DESC'|array<int, 'asc'|'desc'|'ASC'|'DESC'> $direction
      */
     public function childrenQueryBuilder($node = null, $direct = false, $sortByField = null, $direction = 'ASC', $includeNode = false)
     {
         $meta = $this->getClassMetadata();
-        $config = $this->listener->getConfiguration($this->_em, $meta->getName());
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $meta->getName());
 
         $qb = $this->getQueryBuilder();
         if (null !== $node) {
             if (is_a($node, $meta->getName())) {
-                if (!$this->_em->getUnitOfWork()->isInIdentityMap($node)) {
+                if (!$this->getEntityManager()->getUnitOfWork()->isInIdentityMap($node)) {
                     throw new InvalidArgumentException('Node is not managed by UnitOfWork');
                 }
 
@@ -152,10 +161,21 @@ class ClosureTreeRepository extends AbstractTreeRepository
         }
 
         if ($sortByField) {
-            if ($meta->hasField($sortByField) && in_array(strtolower($direction), ['asc', 'desc'], true)) {
-                $qb->orderBy('node.'.$sortByField, $direction);
+            if (is_array($sortByField)) {
+                foreach ($sortByField as $key => $field) {
+                    $fieldDirection = is_array($direction) ? ($direction[$key] ?? 'asc') : $direction;
+                    if (($meta->hasField($field) || $meta->isSingleValuedAssociation($field)) && in_array(strtolower($fieldDirection), ['asc', 'desc'], true)) {
+                        $qb->addOrderBy('node.'.$field, $fieldDirection);
+                    } else {
+                        throw new InvalidArgumentException(sprintf('Invalid sort options specified: field - %s, direction - %s', $field, $fieldDirection));
+                    }
+                }
             } else {
-                throw new InvalidArgumentException("Invalid sort options specified: field - {$sortByField}, direction - {$direction}");
+                if (($meta->hasField($sortByField) || $meta->isSingleValuedAssociation($sortByField)) && in_array(strtolower($direction), ['asc', 'desc'], true)) {
+                    $qb->orderBy('node.'.$sortByField, $direction);
+                } else {
+                    throw new InvalidArgumentException(sprintf('Invalid sort options specified: field - %s, direction - %s', $sortByField, $direction));
+                }
             }
         }
 
@@ -167,7 +187,15 @@ class ClosureTreeRepository extends AbstractTreeRepository
     }
 
     /**
-     * @see getChildrenQuery
+     * @param object|null          $node        If null, all tree nodes will be taken
+     * @param bool                 $direct      True to take only direct children
+     * @param string|string[]|null $sortByField Field name or array of fields names to sort by
+     * @param string|string[]      $direction   Sort order ('asc'|'desc'|'ASC'|'DESC'). If $sortByField is an array, this may also be an array with matching number of elements
+     * @param bool                 $includeNode Include the root node in results?
+     *
+     * @return Query Query object
+     *
+     * @phpstan-param 'asc'|'desc'|'ASC'|'DESC'|array<int, 'asc'|'desc'|'ASC'|'DESC'> $direction
      */
     public function childrenQuery($node = null, $direct = false, $sortByField = null, $direction = 'ASC', $includeNode = false)
     {
@@ -175,38 +203,38 @@ class ClosureTreeRepository extends AbstractTreeRepository
     }
 
     /**
-     * @see getChildren
+     * @param object|null          $node        If null, all tree nodes will be taken
+     * @param bool                 $direct      True to take only direct children
+     * @param string|string[]|null $sortByField Field name or array of fields names to sort by
+     * @param string|string[]      $direction   Sort order ('asc'|'desc'|'ASC'|'DESC'). If $sortByField is an array, this may also be an array with matching number of elements
+     * @param bool                 $includeNode Include the root node in results?
+     *
+     * @return array<int, object|null> List of children or null on failure
+     *
+     * @phpstan-param 'asc'|'desc'|'ASC'|'DESC'|array<int, 'asc'|'desc'|'ASC'|'DESC'> $direction
      */
     public function children($node = null, $direct = false, $sortByField = null, $direction = 'ASC', $includeNode = false)
     {
         $result = $this->childrenQuery($node, $direct, $sortByField, $direction, $includeNode)->getResult();
         if ($node) {
-            $result = array_map(static function (AbstractClosure $closure) {
-                return $closure->getDescendant();
-            }, $result);
+            $result = array_map(static fn (AbstractClosure $closure) => $closure->getDescendant(), $result);
         }
 
         return $result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getChildrenQueryBuilder($node = null, $direct = false, $sortByField = null, $direction = 'ASC', $includeNode = false)
     {
         return $this->childrenQueryBuilder($node, $direct, $sortByField, $direction, $includeNode);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getChildrenQuery($node = null, $direct = false, $sortByField = null, $direction = 'ASC', $includeNode = false)
     {
         return $this->childrenQuery($node, $direct, $sortByField, $direction, $includeNode);
     }
 
     /**
-     * {@inheritdoc}
+     * @return array<int, object|null>
      */
     public function getChildren($node = null, $direct = false, $sortByField = null, $direction = 'ASC', $includeNode = false)
     {
@@ -220,8 +248,10 @@ class ClosureTreeRepository extends AbstractTreeRepository
      *
      * @param object $node
      *
-     * @throws \Gedmo\Exception\InvalidArgumentException
-     * @throws \Gedmo\Exception\RuntimeException         if something fails in transaction
+     * @throws InvalidArgumentException
+     * @throws \Gedmo\Exception\RuntimeException if something fails in transaction
+     *
+     * @return void
      */
     public function removeFromTree($node)
     {
@@ -229,22 +259,22 @@ class ClosureTreeRepository extends AbstractTreeRepository
         if (!is_a($node, $meta->getName())) {
             throw new InvalidArgumentException('Node is not related to this repository');
         }
-        $wrapped = new EntityWrapper($node, $this->_em);
+        $wrapped = new EntityWrapper($node, $this->getEntityManager());
         if (!$wrapped->hasValidIdentifier()) {
             throw new InvalidArgumentException('Node is not managed by UnitOfWork');
         }
-        $config = $this->listener->getConfiguration($this->_em, $meta->getName());
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $meta->getName());
         $pk = $meta->getSingleIdentifierFieldName();
         $nodeId = $wrapped->getIdentifier();
         $parent = $wrapped->getPropertyValue($config['parent']);
 
         $dql = "SELECT node FROM {$config['useObjectClass']} node";
         $dql .= " WHERE node.{$config['parent']} = :node";
-        $q = $this->_em->createQuery($dql);
-        $q->setParameters(compact('node'));
-        $nodesToReparent = $q->getResult();
+        $q = $this->getEntityManager()->createQuery($dql);
+        $q->setParameter('node', $node);
+        $nodesToReparent = $q->toIterable();
         // process updates in transaction
-        $this->_em->getConnection()->beginTransaction();
+        $this->getEntityManager()->getConnection()->beginTransaction();
 
         try {
             foreach ($nodesToReparent as $nodeToReparent) {
@@ -255,55 +285,50 @@ class ClosureTreeRepository extends AbstractTreeRepository
                 $dql .= " SET node.{$config['parent']} = :parent";
                 $dql .= " WHERE node.{$pk} = :id";
 
-                $q = $this->_em->createQuery($dql);
-                $q->setParameters(compact('parent', 'id'));
+                $q = $this->getEntityManager()->createQuery($dql);
+                $q->setParameters([
+                    'parent' => $parent,
+                    'id' => $id,
+                ]);
                 $q->getSingleScalarResult();
 
                 $this->listener
-                    ->getStrategy($this->_em, $meta->getName())
-                    ->updateNode($this->_em, $nodeToReparent, $node);
+                    ->getStrategy($this->getEntityManager(), $meta->getName())
+                    ->updateNode($this->getEntityManager(), $nodeToReparent, $node);
 
                 $oid = spl_object_id($nodeToReparent);
-                $this->_em->getUnitOfWork()->setOriginalEntityProperty($oid, $config['parent'], $parent);
+                $this->getEntityManager()->getUnitOfWork()->setOriginalEntityProperty($oid, $config['parent'], $parent);
             }
 
             $dql = "DELETE {$config['useObjectClass']} node";
             $dql .= " WHERE node.{$pk} = :nodeId";
 
-            $q = $this->_em->createQuery($dql);
-            $q->setParameters(compact('nodeId'));
+            $q = $this->getEntityManager()->createQuery($dql);
+            $q->setParameter('nodeId', $nodeId);
             $q->getSingleScalarResult();
-            $this->_em->getConnection()->commit();
+            $this->getEntityManager()->getConnection()->commit();
         } catch (\Exception $e) {
-            $this->_em->close();
-            $this->_em->getConnection()->rollback();
+            $this->getEntityManager()->close();
+            $this->getEntityManager()->getConnection()->rollback();
 
-            throw new \Gedmo\Exception\RuntimeException('Transaction failed: '.$e->getMessage(), null, $e);
+            throw new \Gedmo\Exception\RuntimeException('Transaction failed: '.$e->getMessage(), $e->getCode(), $e);
         }
         // remove from identity map
-        $this->_em->getUnitOfWork()->removeFromIdentityMap($node);
+        $this->getEntityManager()->getUnitOfWork()->removeFromIdentityMap($node);
         $node = null;
     }
 
-    /**
-     * Process nodes and produce an array with the
-     * structure of the tree
-     *
-     * @param array $nodes Array of nodes
-     *
-     * @return array Array with tree structure
-     */
     public function buildTreeArray(array $nodes)
     {
         $meta = $this->getClassMetadata();
-        $config = $this->listener->getConfiguration($this->_em, $meta->getName());
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $meta->getName());
         $nestedTree = [];
         $idField = $meta->getSingleIdentifierFieldName();
         $hasLevelProp = !empty($config['level']);
         $levelProp = $hasLevelProp ? $config['level'] : self::SUBQUERY_LEVEL;
         $childrenIndex = $this->repoUtils->getChildrenIndex();
 
-        if (count($nodes) > 0) {
+        if ([] !== $nodes) {
             $firstLevel = $hasLevelProp ? $nodes[0][0]['descendant'][$levelProp] : $nodes[0][$levelProp];
             $l = 1;     // 1 is only an initial value. We could have a tree which has a root node with any level (subtrees)
             $refs = [];
@@ -334,29 +359,20 @@ class ClosureTreeRepository extends AbstractTreeRepository
         return $nestedTree;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getNodesHierarchy($node = null, $direct = false, array $options = [], $includeNode = false)
     {
         return $this->getNodesHierarchyQuery($node, $direct, $options, $includeNode)->getArrayResult();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getNodesHierarchyQuery($node = null, $direct = false, array $options = [], $includeNode = false)
     {
         return $this->getNodesHierarchyQueryBuilder($node, $direct, $options, $includeNode)->getQuery();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getNodesHierarchyQueryBuilder($node = null, $direct = false, array $options = [], $includeNode = false)
     {
         $meta = $this->getClassMetadata();
-        $config = $this->listener->getConfiguration($this->_em, $meta->getName());
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $meta->getName());
         $idField = $meta->getSingleIdentifierFieldName();
         $subQuery = '';
         $hasLevelProp = isset($config['level']) && $config['level'];
@@ -366,16 +382,16 @@ class ClosureTreeRepository extends AbstractTreeRepository
             $subQuery .= ' c2 WHERE c2.descendant = c.descendant GROUP BY c2.descendant) AS '.self::SUBQUERY_LEVEL;
         }
 
-        $q = $this->_em->createQueryBuilder()
+        $q = $this->getEntityManager()->createQueryBuilder()
             ->select('c, node, p.'.$idField.' AS parent_id'.$subQuery)
             ->from($config['closure'], 'c')
             ->innerJoin('c.descendant', 'node')
             ->leftJoin('node.parent', 'p')
-            ->addOrderBy(($hasLevelProp ? 'node.'.$config['level'] : self::SUBQUERY_LEVEL), 'asc');
+            ->addOrderBy($hasLevelProp ? 'node.'.$config['level'] : self::SUBQUERY_LEVEL, 'asc');
 
         if (null !== $node) {
             $q->where('c.ancestor = :node');
-            $q->setParameters(compact('node'));
+            $q->setParameter('node', $node);
         } else {
             $q->groupBy('c.descendant');
         }
@@ -387,8 +403,8 @@ class ClosureTreeRepository extends AbstractTreeRepository
         $defaultOptions = [];
         $options = array_merge($defaultOptions, $options);
 
-        if (isset($options['childSort']) && is_array($options['childSort']) &&
-            isset($options['childSort']['field'], $options['childSort']['dir'])) {
+        if (isset($options['childSort']) && is_array($options['childSort'])
+            && isset($options['childSort']['field'], $options['childSort']['dir'])) {
             $q->addOrderBy(
                 'node.'.$options['childSort']['field'],
                 'asc' === strtolower($options['childSort']['dir']) ? 'asc' : 'desc'
@@ -398,15 +414,18 @@ class ClosureTreeRepository extends AbstractTreeRepository
         return $q;
     }
 
+    /**
+     * @return array<int, string>|bool
+     */
     public function verify()
     {
         $nodeMeta = $this->getClassMetadata();
         $nodeIdField = $nodeMeta->getSingleIdentifierFieldName();
-        $config = $this->listener->getConfiguration($this->_em, $nodeMeta->getName());
-        $closureMeta = $this->_em->getClassMetadata($config['closure']);
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $nodeMeta->getName());
+        $closureMeta = $this->getEntityManager()->getClassMetadata($config['closure']);
         $errors = [];
 
-        $q = $this->_em->createQuery("
+        $q = $this->getEntityManager()->createQuery("
           SELECT COUNT(node)
           FROM {$nodeMeta->getName()} AS node
           LEFT JOIN {$closureMeta->getName()} AS c WITH c.ancestor = node AND c.depth = 0
@@ -417,7 +436,7 @@ class ClosureTreeRepository extends AbstractTreeRepository
             $errors[] = "Missing $missingSelfRefsCount self referencing closures";
         }
 
-        $q = $this->_em->createQuery("
+        $q = $this->getEntityManager()->createQuery("
           SELECT COUNT(node)
           FROM {$nodeMeta->getName()} AS node
           INNER JOIN {$closureMeta->getName()} AS c1 WITH c1.descendant = node.{$config['parent']}
@@ -429,7 +448,7 @@ class ClosureTreeRepository extends AbstractTreeRepository
             $errors[] = "Missing $missingClosuresCount closures";
         }
 
-        $q = $this->_em->createQuery("
+        $q = $this->getEntityManager()->createQuery("
             SELECT COUNT(c1.id)
             FROM {$closureMeta->getName()} AS c1
             LEFT JOIN {$nodeMeta->getName()} AS node WITH c1.descendant = node.$nodeIdField
@@ -444,7 +463,7 @@ class ClosureTreeRepository extends AbstractTreeRepository
         if (!empty($config['level'])) {
             $levelField = $config['level'];
             $maxResults = 1000;
-            $q = $this->_em->createQuery("
+            $q = $this->getEntityManager()->createQuery("
                 SELECT node.$nodeIdField AS id, node.$levelField AS node_level, MAX(c.depth) AS closure_level
                 FROM {$nodeMeta->getName()} AS node
                 INNER JOIN {$closureMeta->getName()} AS c WITH c.descendant = node.$nodeIdField
@@ -457,9 +476,12 @@ class ClosureTreeRepository extends AbstractTreeRepository
             }
         }
 
-        return $errors ?: true;
+        return [] !== $errors ? $errors : true;
     }
 
+    /**
+     * @return void
+     */
     public function recover()
     {
         if (true === $this->verify()) {
@@ -470,11 +492,14 @@ class ClosureTreeRepository extends AbstractTreeRepository
         $this->rebuildClosure();
     }
 
+    /**
+     * @return int
+     */
     public function rebuildClosure()
     {
         $nodeMeta = $this->getClassMetadata();
-        $config = $this->listener->getConfiguration($this->_em, $nodeMeta->getName());
-        $closureMeta = $this->_em->getClassMetadata($config['closure']);
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $nodeMeta->getName());
+        $closureMeta = $this->getEntityManager()->getClassMetadata($config['closure']);
 
         $insertClosures = function ($entries) use ($closureMeta) {
             $closureTable = $closureMeta->getTableName();
@@ -482,7 +507,7 @@ class ClosureTreeRepository extends AbstractTreeRepository
             $descendantColumnName = $this->getJoinColumnFieldName($closureMeta->getAssociationMapping('descendant'));
             $depthColumnName = $closureMeta->getColumnName('depth');
 
-            $conn = $this->_em->getConnection();
+            $conn = $this->getEntityManager()->getConnection();
             $conn->beginTransaction();
             foreach ($entries as $entry) {
                 $conn->insert($closureTable, array_combine(
@@ -496,12 +521,12 @@ class ClosureTreeRepository extends AbstractTreeRepository
         $buildClosures = function ($dql) use ($insertClosures) {
             $newClosuresCount = 0;
             $batchSize = 1000;
-            $q = $this->_em->createQuery($dql)->setMaxResults($batchSize)->setCacheable(false);
+            $q = $this->getEntityManager()->createQuery($dql)->setMaxResults($batchSize)->setCacheable(false);
             do {
                 $entries = $q->getScalarResult();
                 $insertClosures($entries);
                 $newClosuresCount += count($entries);
-            } while (count($entries) > 0);
+            } while ([] !== $entries);
 
             return $newClosuresCount;
         };
@@ -524,13 +549,16 @@ class ClosureTreeRepository extends AbstractTreeRepository
         return $newClosuresCount;
     }
 
+    /**
+     * @return int
+     */
     public function cleanUpClosure()
     {
-        $conn = $this->_em->getConnection();
+        $conn = $this->getEntityManager()->getConnection();
         $nodeMeta = $this->getClassMetadata();
         $nodeIdField = $nodeMeta->getSingleIdentifierFieldName();
-        $config = $this->listener->getConfiguration($this->_em, $nodeMeta->getName());
-        $closureMeta = $this->_em->getClassMetadata($config['closure']);
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $nodeMeta->getName());
+        $closureMeta = $this->getEntityManager()->getClassMetadata($config['closure']);
         $closureTableName = $closureMeta->getTableName();
 
         $dql = "
@@ -543,12 +571,10 @@ class ClosureTreeRepository extends AbstractTreeRepository
 
         $deletedClosuresCount = 0;
         $batchSize = 1000;
-        $q = $this->_em->createQuery($dql)->setMaxResults($batchSize)->setCacheable(false);
+        $q = $this->getEntityManager()->createQuery($dql)->setMaxResults($batchSize)->setCacheable(false);
 
         while (($ids = $q->getScalarResult()) && [] !== $ids) {
-            $ids = array_map(static function (array $el) {
-                return $el['id'];
-            }, $ids);
+            $ids = array_map(static fn (array $el) => $el['id'], $ids);
             $query = "DELETE FROM {$closureTableName} WHERE id IN (".implode(', ', $ids).')';
             if (0 === $conn->executeStatement($query)) {
                 throw new \RuntimeException('Failed to remove incorrect closures');
@@ -559,19 +585,22 @@ class ClosureTreeRepository extends AbstractTreeRepository
         return $deletedClosuresCount;
     }
 
+    /**
+     * @return int
+     */
     public function updateLevelValues()
     {
         $nodeMeta = $this->getClassMetadata();
-        $config = $this->listener->getConfiguration($this->_em, $nodeMeta->getName());
+        $config = $this->listener->getConfiguration($this->getEntityManager(), $nodeMeta->getName());
         $levelUpdatesCount = 0;
 
         if (!empty($config['level'])) {
             $levelField = $config['level'];
             $nodeIdField = $nodeMeta->getSingleIdentifierFieldName();
-            $closureMeta = $this->_em->getClassMetadata($config['closure']);
+            $closureMeta = $this->getEntityManager()->getClassMetadata($config['closure']);
 
             $batchSize = 1000;
-            $q = $this->_em->createQuery("
+            $q = $this->getEntityManager()->createQuery("
                 SELECT node.$nodeIdField AS id, node.$levelField AS node_level, MAX(c.depth) AS closure_level
                 FROM {$nodeMeta->getName()} AS node
                 INNER JOIN {$closureMeta->getName()} AS c WITH c.descendant = node.$nodeIdField
@@ -580,29 +609,31 @@ class ClosureTreeRepository extends AbstractTreeRepository
             ")->setMaxResults($batchSize)->setCacheable(false);
             do {
                 $entries = $q->getScalarResult();
-                $this->_em->getConnection()->beginTransaction();
+                $this->getEntityManager()->getConnection()->beginTransaction();
                 foreach ($entries as $entry) {
                     unset($entry['node_level']);
-                    $this->_em->createQuery("
+                    $this->getEntityManager()->createQuery("
                       UPDATE {$nodeMeta->getName()} AS node SET node.$levelField = (:closure_level + 1) WHERE node.$nodeIdField = :id
                     ")->execute($entry);
                 }
-                $this->_em->getConnection()->commit();
+                $this->getEntityManager()->getConnection()->commit();
                 $levelUpdatesCount += count($entries);
-            } while (count($entries) > 0);
+            } while ([] !== $entries);
         }
 
         return $levelUpdatesCount;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function validate()
     {
-        return Strategy::CLOSURE === $this->listener->getStrategy($this->_em, $this->getClassMetadata()->name)->getName();
+        return Strategy::CLOSURE === $this->listener->getStrategy($this->getEntityManager(), $this->getClassMetadata()->name)->getName();
     }
 
+    /**
+     * @param array<string, mixed> $association
+     *
+     * @return string|null
+     */
     protected function getJoinColumnFieldName($association)
     {
         if (count($association['joinColumnFieldNames']) > 1) {

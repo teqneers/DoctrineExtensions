@@ -23,6 +23,8 @@ use Gedmo\Tests\Translatable\Fixture\Template\ArticleTemplate;
 class TemplatedArticle extends ArticleTemplate
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
@@ -34,18 +36,19 @@ class TemplatedArticle extends ArticleTemplate
 
     /**
      * @Gedmo\Translatable
+     *
      * @ORM\Column(type="string", length=128)
      */
     #[Gedmo\Translatable]
     #[ORM\Column(type: Types::STRING, length: 128)]
-    private $name;
+    private ?string $name = null;
 
-    public function setName($name)
+    public function setName(?string $name): void
     {
         $this->name = $name;
     }
 
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }

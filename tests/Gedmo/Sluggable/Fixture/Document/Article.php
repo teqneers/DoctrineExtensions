@@ -30,27 +30,25 @@ class Article
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
-    private $code;
+    private ?string $code = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(separator="-", updatable=true, fields={"title", "code"})
+     *
      * @ODM\Field(type="string")
      */
+    #[Gedmo\Slug(separator: '-', updatable: true, fields: ['title', 'code'])]
     #[ODM\Field(type: Type::STRING)]
     private $slug;
 

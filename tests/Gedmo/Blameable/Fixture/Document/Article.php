@@ -31,59 +31,51 @@ class Article
 
     /**
      * @ODM\Field(type="string")
-     *
-     * @var string|null
      */
     #[ODM\Field(type: MongoDBType::STRING)]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @ODM\ReferenceOne(targetDocument="Type")
-     *
-     * @var Type|null
+     * @ODM\ReferenceOne(targetDocument="Gedmo\Tests\Blameable\Fixture\Document\Type")
      */
-    #[Odm\ReferenceOne(targetDocument: Type::class)]
-    private $type;
+    #[ODM\ReferenceOne(targetDocument: Type::class)]
+    private ?Type $type = null;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
+     *
      * @Gedmo\Blameable(on="create")
      */
     #[ODM\Field(type: MongoDBType::STRING)]
     #[Gedmo\Blameable(on: 'create')]
-    private $created;
+    private ?string $created = null;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
+     *
      * @Gedmo\Blameable
      */
     #[ODM\Field(type: MongoDBType::STRING)]
     #[Gedmo\Blameable]
-    private $updated;
+    private ?string $updated = null;
 
     /**
-     * @ODM\ReferenceOne(targetDocument="User")
-     * @Gedmo\Blameable(on="create")
+     * @ODM\ReferenceOne(targetDocument="Gedmo\Tests\Blameable\Fixture\Document\User")
      *
-     * @var User|null
+     * @Gedmo\Blameable(on="create")
      */
     #[ODM\ReferenceOne(targetDocument: User::class)]
     #[Gedmo\Blameable(on: 'create')]
-    private $creator;
+    private ?User $creator = null;
 
     /**
-     * @var string|null
-     *
      * @ODM\Field(type="string")
+     *
      * @Gedmo\Blameable(on="change", field="type.title", value="Published")
      */
     #[Gedmo\Blameable(on: 'change', field: 'type.title', value: 'Published')]
     #[ODM\Field(type: MongoDBType::STRING)]
-    private $published;
+    private ?string $published = null;
 
     public function getId(): ?string
     {

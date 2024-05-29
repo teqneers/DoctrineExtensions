@@ -13,7 +13,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
- * Blameable Trait, usable with PHP >= 5.4
+ * Trait for blamable objects.
+ *
+ * This implementation provides a mapping configuration for the Doctrine ORM.
  *
  * @author David Buchmann <mail@davidbu.ch>
  */
@@ -21,7 +23,9 @@ trait BlameableEntity
 {
     /**
      * @var string
+     *
      * @Gedmo\Blameable(on="create")
+     *
      * @ORM\Column(nullable=true)
      */
     #[ORM\Column(nullable: true)]
@@ -30,7 +34,9 @@ trait BlameableEntity
 
     /**
      * @var string
+     *
      * @Gedmo\Blameable(on="update")
+     *
      * @ORM\Column(nullable=true)
      */
     #[ORM\Column(nullable: true)]

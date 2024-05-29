@@ -23,6 +23,8 @@ use Gedmo\Tool\Wrapper\AbstractWrapper;
  * category tree slug could look like "food/fruits/apples"
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class TreeSlugHandler implements SlugHandlerWithUniqueCallbackInterface
 {
@@ -69,17 +71,11 @@ class TreeSlugHandler implements SlugHandlerWithUniqueCallbackInterface
      */
     private $usedPathSeparator;
 
-    /**
-     * {@inheritdoc}
-     */
     public function __construct(SluggableListener $sluggable)
     {
         $this->sluggable = $sluggable;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onChangeDecision(SluggableAdapter $ea, array &$config, $object, &$slug, &$needToChangeSlug)
     {
         $this->om = $ea->getObjectManager();
@@ -98,9 +94,6 @@ class TreeSlugHandler implements SlugHandlerWithUniqueCallbackInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function postSlugBuild(SluggableAdapter $ea, array &$config, $object, &$slug)
     {
         $options = $config['handlers'][static::class];
@@ -115,16 +108,13 @@ class TreeSlugHandler implements SlugHandlerWithUniqueCallbackInterface
             if (isset($options['suffix'])) {
                 $suffix = $options['suffix'];
 
-                if (substr($this->parentSlug, -strlen($suffix)) === $suffix) { //endsWith
+                if (substr($this->parentSlug, -strlen($suffix)) === $suffix) { // endsWith
                     $this->parentSlug = substr_replace($this->parentSlug, '', -1 * strlen($suffix));
                 }
             }
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function validate(array $options, ClassMetadata $meta)
     {
         if (!$meta->isSingleValuedAssociation($options['parentRelationField'])) {
@@ -132,17 +122,11 @@ class TreeSlugHandler implements SlugHandlerWithUniqueCallbackInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function beforeMakingUnique(SluggableAdapter $ea, array &$config, $object, &$slug)
     {
         $slug = $this->transliterate($slug, $config['separator'], $object);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onSlugCompletion(SluggableAdapter $ea, array &$config, $object, &$slug)
     {
         if (!$this->isInsert) {
@@ -164,7 +148,7 @@ class TreeSlugHandler implements SlugHandlerWithUniqueCallbackInterface
                         continue;
                     }
 
-                    $objectSlug = $meta->getReflectionProperty($config['slug'])->getValue($object);
+                    $objectSlug = (string) $meta->getReflectionProperty($config['slug'])->getValue($object);
                     if (preg_match("@^{$target}{$config['pathSeparator']}@smi", $objectSlug)) {
                         $objectSlug = str_replace($target, $slug, $objectSlug);
                         $meta->getReflectionProperty($config['slug'])->setValue($object, $objectSlug);
@@ -199,9 +183,6 @@ class TreeSlugHandler implements SlugHandlerWithUniqueCallbackInterface
         return $slug;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function handlesUrlization()
     {
         return false;

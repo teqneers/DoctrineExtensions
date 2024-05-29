@@ -9,7 +9,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Translatable;
+namespace Gedmo\Tests\Translatable\Issue;
 
 use Doctrine\Common\EventManager;
 use Doctrine\ORM\Query;
@@ -27,13 +27,13 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class Issue135Test extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const COMMENT = Comment::class;
-    public const TRANSLATION = Translation::class;
+    private const ARTICLE = Article::class;
+    private const COMMENT = Comment::class;
+    private const TRANSLATION = Translation::class;
 
-    public const TREE_WALKER_TRANSLATION = TranslationWalker::class;
+    private const TREE_WALKER_TRANSLATION = TranslationWalker::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -49,7 +49,7 @@ final class Issue135Test extends BaseTestCaseORM
         $this->populate();
     }
 
-    public function testIssue135()
+    public function testIssue135(): void
     {
         $query = $this->em->createQueryBuilder();
         $query->select('a')
@@ -64,11 +64,11 @@ final class Issue135Test extends BaseTestCaseORM
         $query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, self::TREE_WALKER_TRANSLATION);
 
         $count = 0;
-        str_replace("locale = 'en'", '', $query->getSql(), $count);
+        str_replace("locale = 'en'", '', $query->getSQL(), $count);
         static::assertSame(0, $count);
     }
 
-    public function populate()
+    public function populate(): void
     {
         $this->translatableListener->setTranslatableLocale('en');
         $this->translatableListener->setDefaultLocale('en');
@@ -101,7 +101,7 @@ final class Issue135Test extends BaseTestCaseORM
         $this->em->flush();
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,

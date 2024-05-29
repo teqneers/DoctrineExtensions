@@ -11,50 +11,60 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Loggable\Fixture\Document;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use Doctrine\ODM\MongoDB\Types\Type;
+use Gedmo\Loggable\Loggable;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ODM\Document
+ *
  * @Gedmo\Loggable
  */
 #[ODM\Document]
 #[Gedmo\Loggable]
-class RelatedArticle
+class RelatedArticle implements Loggable
 {
     /**
      * @var string|null
+     *
      * @ODM\Id
      */
     #[ODM\Id]
     private $id;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
     #[Gedmo\Versioned]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ODM\Field(type="string")
      */
     #[ODM\Field(type: Type::STRING)]
     #[Gedmo\Versioned]
-    private $content;
+    private ?string $content = null;
 
     /**
      * @var Collection<int, Comment>
+     *
      * @ODM\ReferenceMany(targetDocument="Gedmo\Tests\Loggable\Fixture\Document\Comment", mappedBy="article")
      */
     #[ODM\ReferenceMany(targetDocument: Comment::class, mappedBy: 'article')]
     private $comments;
+
+    public function __construct()
+    {
+        $this->comments = new ArrayCollection();
+    }
 
     public function getId(): ?string
     {

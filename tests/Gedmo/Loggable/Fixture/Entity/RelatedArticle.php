@@ -11,21 +11,25 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Loggable\Fixture\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Loggable\Loggable;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\Entity
+ *
  * @Gedmo\Loggable
  */
 #[ORM\Entity]
 #[Gedmo\Loggable]
-class RelatedArticle
+class RelatedArticle implements Loggable
 {
     /**
      * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
@@ -36,29 +40,35 @@ class RelatedArticle
     private $id;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ORM\Column(length=128)
      */
     #[ORM\Column(length: 128)]
     #[Gedmo\Versioned]
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ORM\Column(type="text")
      */
     #[ORM\Column(Types::TEXT)]
     #[Gedmo\Versioned]
-    private $content;
+    private ?string $content = null;
 
     /**
      * @var Collection<int, Comment>
+     *
      * @ORM\OneToMany(targetEntity="Comment", mappedBy="article")
      */
     #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'article')]
     private $comments;
+
+    public function __construct()
+    {
+        $this->comments = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {

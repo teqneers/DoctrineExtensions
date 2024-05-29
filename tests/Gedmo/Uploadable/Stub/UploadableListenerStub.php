@@ -13,11 +13,14 @@ namespace Gedmo\Tests\Uploadable\Stub;
 
 use Gedmo\Uploadable\UploadableListener;
 
-class UploadableListenerStub extends UploadableListener
+final class UploadableListenerStub extends UploadableListener
 {
+    /**
+     * @var bool
+     */
     public $returnFalseOnMoveUploadedFile = false;
 
-    public function doMoveFile($source, $dest, $isUploadedFile = true)
+    public function doMoveFile($source, $dest, $isUploadedFile = true): bool
     {
         return $this->returnFalseOnMoveUploadedFile ? false : parent::doMoveFile($source, $dest, false);
     }

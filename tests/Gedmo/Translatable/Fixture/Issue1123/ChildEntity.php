@@ -26,11 +26,12 @@ class ChildEntity extends BaseEntity implements Translatable
 {
     /**
      * @Gedmo\Translatable
+     *
      * @ORM\Column(name="childTitle", type="string", length=128, nullable=true)
      */
     #[ORM\Column(name: 'childTitle', type: Types::STRING, length: 128, nullable: true)]
     #[Gedmo\Translatable]
-    private $childTitle;
+    private ?string $childTitle = null;
 
     /**
      * @Gedmo\Locale
@@ -38,19 +39,19 @@ class ChildEntity extends BaseEntity implements Translatable
      * this is not a mapped field of entity metadata, just a simple property
      */
     #[Gedmo\Locale]
-    private $locale = 'en';
+    private string $locale = 'en';
 
-    public function getChildTitle()
+    public function getChildTitle(): ?string
     {
         return $this->childTitle;
     }
 
-    public function setChildTitle($childTitle)
+    public function setChildTitle(?string $childTitle): void
     {
         $this->childTitle = $childTitle;
     }
 
-    public function setTranslatableLocale($locale)
+    public function setTranslatableLocale(string $locale): void
     {
         $this->locale = $locale;
     }

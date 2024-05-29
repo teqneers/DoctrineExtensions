@@ -10,10 +10,12 @@
 namespace Gedmo\Tree\Strategy;
 
 use Doctrine\ODM\MongoDB\UnitOfWork as MongoDBUnitOfWork;
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
 use Gedmo\Exception\RuntimeException;
 use Gedmo\Exception\TreeLockingException;
 use Gedmo\Mapping\Event\AdapterInterface;
+use Gedmo\Tree\Node;
 use Gedmo\Tree\Strategy;
 use Gedmo\Tree\TreeListener;
 use MongoDB\BSON\UTCDateTime;
@@ -40,7 +42,7 @@ abstract class AbstractMaterializedPath implements Strategy
     /**
      * Array of objects which were scheduled for path processes
      *
-     * @var array
+     * @var array<int, object|Node>
      */
     protected $scheduledForPathProcess = [];
 
@@ -49,57 +51,48 @@ abstract class AbstractMaterializedPath implements Strategy
      * This time, this array contains the objects with their ID
      * already set
      *
-     * @var array
+     * @var array<int, object|Node>
      */
     protected $scheduledForPathProcessWithIdSet = [];
 
     /**
      * Roots of trees which needs to be locked
      *
-     * @var array
+     * @var array<int, object|Node>
      */
     protected $rootsOfTreesWhichNeedsLocking = [];
 
     /**
      * Objects which are going to be inserted (set only if tree locking is used)
      *
-     * @var array
+     * @var array<int, object|Node>
      */
     protected $pendingObjectsToInsert = [];
 
     /**
      * Objects which are going to be updated (set only if tree locking is used)
      *
-     * @var array
+     * @var array<int, object|Node>
      */
     protected $pendingObjectsToUpdate = [];
 
     /**
      * Objects which are going to be removed (set only if tree locking is used)
      *
-     * @var array
+     * @var array<int, object|Node>
      */
     protected $pendingObjectsToRemove = [];
 
-    /**
-     * {@inheritdoc}
-     */
     public function __construct(TreeListener $listener)
     {
         $this->listener = $listener;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getName()
     {
         return Strategy::MATERIALIZED_PATH;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processScheduledInsertion($om, $node, AdapterInterface $ea)
     {
         $meta = $om->getClassMetadata(get_class($node));
@@ -113,9 +106,6 @@ abstract class AbstractMaterializedPath implements Strategy
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processScheduledUpdate($om, $node, AdapterInterface $ea)
     {
         $meta = $om->getClassMetadata(get_class($node));
@@ -137,9 +127,6 @@ abstract class AbstractMaterializedPath implements Strategy
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processPostPersist($om, $node, AdapterInterface $ea)
     {
         $oid = spl_object_id($node);
@@ -161,64 +148,40 @@ abstract class AbstractMaterializedPath implements Strategy
         $this->processPostEventsActions($om, $ea, $node, self::ACTION_INSERT);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processPostUpdate($om, $node, AdapterInterface $ea)
     {
         $this->processPostEventsActions($om, $ea, $node, self::ACTION_UPDATE);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processPostRemove($om, $node, AdapterInterface $ea)
     {
         $this->processPostEventsActions($om, $ea, $node, self::ACTION_REMOVE);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onFlushEnd($om, AdapterInterface $ea)
     {
         $this->lockTrees($om, $ea);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processPreRemove($om, $node)
     {
         $this->processPreLockingActions($om, $node, self::ACTION_REMOVE);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processPrePersist($om, $node)
     {
         $this->processPreLockingActions($om, $node, self::ACTION_INSERT);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processPreUpdate($om, $node)
     {
         $this->processPreLockingActions($om, $node, self::ACTION_UPDATE);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processMetadataLoad($om, $meta)
     {
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function processScheduledDelete($om, $node)
     {
         $meta = $om->getClassMetadata(get_class($node));
@@ -477,8 +440,8 @@ abstract class AbstractMaterializedPath implements Strategy
                     throw new \InvalidArgumentException(sprintf('"%s" is not a valid action.', $action));
             }
 
-            if (empty($this->pendingObjectsToInsert) && empty($this->pendingObjectsToUpdate) &&
-                empty($this->pendingObjectsToRemove)) {
+            if (empty($this->pendingObjectsToInsert) && empty($this->pendingObjectsToUpdate)
+                && empty($this->pendingObjectsToRemove)) {
                 $this->releaseTreeLocks($om, $ea);
             }
         }
@@ -487,10 +450,10 @@ abstract class AbstractMaterializedPath implements Strategy
     /**
      * Remove node and its children
      *
-     * @param ObjectManager $om
-     * @param object        $meta   Metadata
-     * @param object        $config config
-     * @param object        $node   node to remove
+     * @param ObjectManager        $om
+     * @param ClassMetadata        $meta   Metadata
+     * @param array<string, mixed> $config config
+     * @param object               $node   node to remove
      *
      * @return void
      */
@@ -499,12 +462,12 @@ abstract class AbstractMaterializedPath implements Strategy
     /**
      * Returns children of the node with its original path
      *
-     * @param ObjectManager $om
-     * @param object        $meta         Metadata
-     * @param object        $config       config
-     * @param string        $originalPath original path of object
+     * @param ObjectManager        $om
+     * @param ClassMetadata        $meta         Metadata
+     * @param array<string, mixed> $config       config
+     * @param string               $originalPath original path of object
      *
-     * @return array|\Traversable
+     * @return array<int, object>|\Traversable<int, object>
      */
     abstract public function getChildren($om, $meta, $config, $originalPath);
 

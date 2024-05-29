@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Sluggable\Fixture\Issue827;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -27,15 +28,20 @@ class Post
      */
     #[ORM\Id]
     #[ORM\Column(name: 'title', unique: true, length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
+     * @var string|null
+     *
      * @ORM\Id
+     *
      * @Gedmo\Slug(updatable=true, unique=true, fields={"title"})
+     *
      * @ORM\Column(length=64, nullable=true)
      */
     #[ORM\Id]
     #[ORM\Column(length: 64, nullable: true)]
+    #[Gedmo\Slug(updatable: true, unique: true, fields: ['title'])]
     private $slug;
 
     /**
@@ -44,7 +50,12 @@ class Post
      * @ORM\OneToMany(targetEntity="Comment", mappedBy="post")
      */
     #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'post')]
-    private $comments;
+    private Collection $comments;
+
+    public function __construct()
+    {
+        $this->comments = new ArrayCollection();
+    }
 
     public function setTitle(?string $title): void
     {

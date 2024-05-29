@@ -22,23 +22,22 @@ use Gedmo\Tree\Mapping\Validator;
  * @author Gustavo Falco <comfortablynumb84@gmail.com>
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  * @author Miha Vrhovnik <miha.vrhovnik@gmail.com>
+ *
+ * @internal
  */
 class Xml extends BaseXml
 {
     /**
      * List of tree strategies available
      *
-     * @var array
+     * @var string[]
      */
-    private $strategies = [
+    private array $strategies = [
         'nested',
         'closure',
         'materializedPath',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         /**
@@ -111,7 +110,7 @@ class Xml extends BaseXml
                         throw new InvalidMappingException("Tree Path field - [{$field}] Separator {$separator} is invalid. It must be only one character long.");
                     }
 
-                    $appendId = !$this->_isAttributeSet($mapping->{'tree-path'}, 'append_id') || $this->_getBooleanAttribute($mapping->{'tree-path'}, 'append_id');
+                    $appendId = $this->_isAttributeSet($mapping->{'tree-path'}, 'append_id') ? $this->_getBooleanAttribute($mapping->{'tree-path'}, 'append_id') : null;
                     $startsWithSeparator = $this->_isAttributeSet($mapping->{'tree-path'}, 'starts_with_separator') && $this->_getBooleanAttribute($mapping->{'tree-path'}, 'starts_with_separator');
                     $endsWithSeparator = !$this->_isAttributeSet($mapping->{'tree-path'}, 'ends_with_separator') || $this->_getBooleanAttribute($mapping->{'tree-path'}, 'ends_with_separator');
 
@@ -254,5 +253,7 @@ class Xml extends BaseXml
                 throw new InvalidMappingException("Cannot find Tree type for class: {$meta->getName()}");
             }
         }
+
+        return $config;
     }
 }

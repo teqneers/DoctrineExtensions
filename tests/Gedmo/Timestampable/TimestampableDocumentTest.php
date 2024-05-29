@@ -24,8 +24,7 @@ use Gedmo\Timestampable\TimestampableListener;
  */
 final class TimestampableDocumentTest extends BaseTestCaseMongoODM
 {
-    public const ARTICLE = Article::class;
-    public const TYPE = Type::class;
+    private const ARTICLE = Article::class;
 
     protected function setUp(): void
     {
@@ -37,7 +36,7 @@ final class TimestampableDocumentTest extends BaseTestCaseMongoODM
         $this->populate();
     }
 
-    public function testTimestampable()
+    public function testTimestampable(): void
     {
         $repo = $this->dm->getRepository(self::ARTICLE);
         $article = $repo->findOneBy(['title' => 'Timestampable Article']);
@@ -69,7 +68,7 @@ final class TimestampableDocumentTest extends BaseTestCaseMongoODM
         );
     }
 
-    public function testForcedValues()
+    public function testForcedValues(): void
     {
         $sport = new Article();
         $sport->setTitle('sport forced');
@@ -110,10 +109,7 @@ final class TimestampableDocumentTest extends BaseTestCaseMongoODM
         );
     }
 
-    /**
-     * @test
-     */
-    public function shouldHandleOnChangeWithBooleanValue()
+    public function testShouldHandleOnChangeWithBooleanValue(): void
     {
         $repo = $this->dm->getRepository(self::ARTICLE);
         $article = $repo->findOneBy(['title' => 'Timestampable Article']);

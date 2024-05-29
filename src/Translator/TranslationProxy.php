@@ -44,10 +44,10 @@ class TranslationProxy
     /**
      * Initializes translations collection
      *
-     * @param object $translatable object to translate
-     * @param string $locale       translation name
-     * @param array  $properties   object properties to translate
-     * @param string $class        translation entity|document class
+     * @param object   $translatable object to translate
+     * @param string   $locale       translation name
+     * @param string[] $properties   object properties to translate
+     * @param string   $class        translation entity|document class
      *
      * @throws \InvalidArgumentException Translation class doesn't implement TranslationInterface
      *
@@ -67,6 +67,12 @@ class TranslationProxy
         }
     }
 
+    /**
+     * @param string  $method
+     * @param mixed[] $arguments
+     *
+     * @return mixed
+     */
     public function __call($method, $arguments)
     {
         $matches = [];
@@ -96,6 +102,11 @@ class TranslationProxy
         return $return;
     }
 
+    /**
+     * @param string $property
+     *
+     * @return mixed
+     */
     public function __get($property)
     {
         if (in_array($property, $this->properties, true)) {
@@ -109,19 +120,32 @@ class TranslationProxy
         return $this->translatable->$property;
     }
 
+    /**
+     * @param string $property
+     * @param mixed  $value
+     */
     public function __set($property, $value)
     {
         if (in_array($property, $this->properties, true)) {
             if (method_exists($this, $setter = 'set'.ucfirst($property))) {
-                return $this->$setter($value);
+                $this->$setter($value);
+
+                return;
             }
 
-            return $this->setTranslatedValue($property, $value);
+            $this->setTranslatedValue($property, $value);
+
+            return;
         }
 
         $this->translatable->$property = $value;
     }
 
+    /**
+     * @param string $property
+     *
+     * @return bool
+     */
     public function __isset($property)
     {
         return in_array($property, $this->properties, true);
@@ -156,6 +180,8 @@ class TranslationProxy
      *
      * @param string $property property name
      * @param string $value    value
+     *
+     * @return void
      */
     public function setTranslatedValue($property, $value)
     {

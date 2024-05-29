@@ -26,19 +26,19 @@ class Vehicle
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(length=128)
      */
     #[ORM\Column(length: 128)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(fields={"title"}, updatable=false)
+     *
      * @ORM\Column(length=128, unique=true)
      */
+    #[Gedmo\Slug(updatable: false, fields: ['title'])]
     #[ORM\Column(length: 128, unique: true)]
     private $slug;
 

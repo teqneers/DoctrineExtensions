@@ -28,8 +28,7 @@ flushed in a behavioral way.
 
     composer require gedmo/doctrine-extensions
 
-* [Symfony 2](/doc/symfony2.md)
-* [Symfony 4](/doc/symfony4.md)
+* [Symfony](/doc/symfony.md)
 * [Laravel 5](https://www.laraveldoctrine.org/docs/1.3/extensions)
 * [Laminas](/doc/laminas.md)
 
@@ -62,7 +61,7 @@ flushed in a behavioral way.
 - [**References**](/doc/references.md) - supports linking Entities in Documents and vice versa
 - [**ReferenceIntegrity**](/doc/reference_integrity.md) - constrains ODM MongoDB Document references
 
-All extensions support **YAML**, **Annotation** and **XML** mapping. Additional mapping drivers
+All extensions support **Attribute**, **Annotation** and **XML** mapping. Additional mapping drivers
 can be easily implemented using Mapping extension to handle the additional metadata mapping.
 
 ### Version Compatibility
@@ -72,7 +71,7 @@ can be easily implemented using Mapping extension to handle the additional metad
 | 2.4 | 2.5+ |
 | 2.3 | 2.2 - 2.4 |
 
-If you are setting up the Entity Manager without a framework, see the [the example](/example/em.php) to prevent issues like #1310
+If you are setting up the Entity Manager without a framework, see the [example](/example/em.php) to prevent issues like #1310
 
 ### XML Mapping
 
@@ -97,19 +96,19 @@ XML mapping xsd schemas are also versioned and can be used by version suffix:
 
 To set up and run the tests, follow these steps:
 
-- Install [Docker](https://www.docker.com/) and ensure you have `docker-compose`
-- From the project root, run `docker-compose up -d` to start containers in daemon mode
-- Enter the container via `docker-compose exec php bash` and navigate to the root directory: `cd /var/www`
+- Install [Docker](https://www.docker.com/) and ensure you have `docker compose`
+- From the project root, run `docker compose up -d` to start containers in daemon mode
+- Enter the container via `docker compose exec php bash` (you are now in the root directory: `/var/www`)
 - Install Composer dependencies via `composer install`
-- Run the tests: `bin/phpunit -c tests/`
+- Run the tests: `vendor/bin/phpunit -c tests/`
 
 ### Running the Example
 
 To set up and run example, follow these steps:
 
 - go to the root directory of extensions
-- download composer: `wget https://getcomposer.org/composer.phar`
-- install dev libraries: `php composer.phar install`
+- [download composer](https://getcomposer.org/download/)
+- install dev libraries: `composer install`
 - edit `example/em.php` and configure your database on top of the file
 - run: `php example/bin/console` or `php example/bin/console` for console commands
 - run: `php example/bin/console orm:schema-tool:create` to create the schema
@@ -117,13 +116,13 @@ To set up and run example, follow these steps:
 
 ### Contributors
 
-Thanks to [everyone participating](http://github.com/l3pp4rd/DoctrineExtensions/contributors) in
+Thanks to [everyone participating](https://github.com/doctrine-extensions/DoctrineExtensions/contributors) in
 the development of these great Doctrine extensions!
 
 And especially ones who create and maintain new extensions:
 
-- Lukas Botsch [lbotsch](http://github.com/lbotsch)
-- Gustavo Adrian [comfortablynumb](http://github.com/comfortablynumb)
-- Boussekeyt Jules [gordonslondon](http://github.com/gordonslondon)
-- Kudryashov Konstantin [everzet](http://github.com/everzet)
+- Lukas Botsch [lbotsch](https://github.com/lbotsch)
+- Gustavo Adrian [comfortablynumb](https://github.com/comfortablynumb)
+- Boussekeyt Jules [gordonslondon](https://github.com/gordonslondon)
+- Kudryashov Konstantin [everzet](https://github.com/everzet)
 - David Buchmann [dbu](https://github.com/dbu)

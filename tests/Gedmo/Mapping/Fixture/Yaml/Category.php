@@ -21,26 +21,20 @@ class Category extends BaseCategory
      */
     private $id;
 
-    /**
-     * @var string
-     */
-    private $title;
+    private ?string $title = null;
+
+    private ?string $slug = null;
 
     /**
-     * @var string
-     */
-    private $slug;
-
-    /**
-     * @var Collection<int, Category>
+     * @var Collection<int, self>
      */
     private $children;
 
-    /**
-     * @var Category
-     */
-    private $parent;
+    private ?Category $parent = null;
 
+    /**
+     * @var \DateTime
+     */
     private $changed;
 
     public function __construct()
@@ -51,31 +45,22 @@ class Category extends BaseCategory
     /**
      * @return int $id
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @param string $title
-     */
-    public function setTitle($title)
+    public function setTitle(string $title): void
     {
         $this->title = $title;
     }
 
-    /**
-     * @return string $title
-     */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->title;
     }
 
-    /**
-     * @param string $slug
-     */
-    public function setSlug($slug)
+    public function setSlug(string $slug): void
     {
         $this->slug = $slug;
     }
@@ -83,39 +68,33 @@ class Category extends BaseCategory
     /**
      * @return string $slug
      */
-    public function getSlug()
+    public function getSlug(): string
     {
         return $this->slug;
     }
 
-    /**
-     * @param Category $children
-     */
-    public function addChildren(self $children)
+    public function addChildren(self $children): void
     {
         $this->children[] = $children;
     }
 
     /**
-     * @return Collection $children
+     * @return Collection<int, self> $children
      */
     public function getChildren()
     {
         return $this->children;
     }
 
-    /**
-     * @param Category $parent
-     */
-    public function setParent($parent)
+    public function setParent(self $parent): void
     {
         $this->parent = $parent;
     }
 
     /**
-     * @return Category $parent
+     * @return self $parent
      */
-    public function getParent()
+    public function getParent(): self
     {
         return $this->parent;
     }

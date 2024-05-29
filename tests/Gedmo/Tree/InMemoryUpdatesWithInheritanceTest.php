@@ -25,9 +25,9 @@ use Gedmo\Tree\TreeListener;
  */
 final class InMemoryUpdatesWithInheritanceTest extends BaseTestCaseORM
 {
-    public const PERSON = Person::class;
-    public const MAN = Man::class;
-    public const WOMAN = Woman::class;
+    private const PERSON = Person::class;
+    private const MAN = Man::class;
+    private const WOMAN = Woman::class;
 
     protected function setUp(): void
     {
@@ -36,13 +36,11 @@ final class InMemoryUpdatesWithInheritanceTest extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber(new TreeListener());
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testInMemoryTreeInsertsWithInheritance()
+    public function testInMemoryTreeInsertsWithInheritance(): void
     {
-        $nodes = [];
-
         $man1 = new Man('Root - Man1');
         $this->em->persist($man1);
 
@@ -89,7 +87,7 @@ final class InMemoryUpdatesWithInheritanceTest extends BaseTestCaseORM
         static::assertSame(3, $level);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::PERSON,

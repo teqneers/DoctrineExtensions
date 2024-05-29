@@ -9,17 +9,22 @@
 
 namespace Gedmo\Translatable\Query\TreeWalker;
 
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query;
+use Doctrine\ORM\Query\AST\FromClause;
 use Doctrine\ORM\Query\AST\Join;
 use Doctrine\ORM\Query\AST\Node;
 use Doctrine\ORM\Query\AST\RangeVariableDeclaration;
 use Doctrine\ORM\Query\AST\SelectStatement;
+use Doctrine\ORM\Query\AST\SubselectFromClause;
 use Doctrine\ORM\Query\Exec\SingleSelectExecutor;
 use Doctrine\ORM\Query\SqlWalker;
+use Gedmo\Exception\RuntimeException;
 use Gedmo\Translatable\Hydrator\ORM\ObjectHydrator;
 use Gedmo\Translatable\Hydrator\ORM\SimpleObjectHydrator;
 use Gedmo\Translatable\Mapping\Event\Adapter\ORM as TranslatableEventAdapter;
@@ -36,6 +41,8 @@ use Gedmo\Translatable\TranslatableListener;
  * of the fields.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class TranslationWalker extends SqlWalker
 {
@@ -63,21 +70,23 @@ class TranslationWalker extends SqlWalker
     /**
      * Stores all component references from select clause
      *
-     * @var array
+     * @var array<string, array<string, mixed>>
+     *
+     * @phpstan-var array<string, array{metadata: ClassMetadata}>
      */
-    private $translatedComponents = [];
+    private array $translatedComponents = [];
 
     /**
      * DBAL database platform
      *
-     * @var \Doctrine\DBAL\Platforms\AbstractPlatform
+     * @var AbstractPlatform
      */
     private $platform;
 
     /**
      * DBAL database connection
      *
-     * @var \Doctrine\DBAL\Connection
+     * @var Connection
      */
     private $conn;
 
@@ -85,25 +94,19 @@ class TranslationWalker extends SqlWalker
      * List of aliases to replace with translation
      * content reference
      *
-     * @var array
+     * @var array<string, string>
      */
-    private $replacements = [];
+    private array $replacements = [];
 
     /**
      * List of joins for translated components in query
      *
-     * @var array
+     * @var array<string, string>
      */
-    private $components = [];
+    private array $components = [];
 
-    /**
-     * @var TranslatableListener
-     */
-    private $listener;
+    private TranslatableListener $listener;
 
-    /**
-     * {@inheritdoc}
-     */
     public function __construct($query, $parserResult, array $queryComponents)
     {
         parent::__construct($query, $parserResult, $queryComponents);
@@ -114,7 +117,7 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return Query\Exec\AbstractSqlExecutor
      */
     public function getExecutor($AST)
     {
@@ -129,12 +132,12 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkSelectStatement(SelectStatement $AST)
     {
         $result = parent::walkSelectStatement($AST);
-        if (!count($this->translatedComponents)) {
+        if ([] === $this->translatedComponents) {
             return $result;
         }
 
@@ -159,18 +162,17 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkSelectClause($selectClause)
     {
         $result = parent::walkSelectClause($selectClause);
-        $result = $this->replace($this->replacements, $result);
 
-        return $result;
+        return $this->replace($this->replacements, $result);
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkFromClause($fromClause)
     {
@@ -181,7 +183,7 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkWhereClause($whereClause)
     {
@@ -191,7 +193,7 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkHavingClause($havingClause)
     {
@@ -201,7 +203,7 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkOrderByClause($orderByClause)
     {
@@ -211,17 +213,15 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkSubselect($subselect)
     {
-        $result = parent::walkSubselect($subselect);
-
-        return $result;
+        return parent::walkSubselect($subselect);
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkSubselectFromClause($subselectFromClause)
     {
@@ -232,7 +232,7 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkSimpleSelectClause($simpleSelectClause)
     {
@@ -242,7 +242,7 @@ class TranslationWalker extends SqlWalker
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
     public function walkGroupByClause($groupByClause)
     {
@@ -255,7 +255,7 @@ class TranslationWalker extends SqlWalker
      * Walks from clause, and creates translation joins
      * for the translated components
      *
-     * @param \Doctrine\ORM\Query\AST\FromClause|\Doctrine\ORM\Query\AST\SubselectFromClause $from
+     * @param FromClause|SubselectFromClause $from
      */
     private function joinTranslations(Node $from): string
     {
@@ -351,10 +351,10 @@ class TranslationWalker extends SqlWalker
 
                 // Treat translation as original field type
                 $fieldMapping = $meta->getFieldMapping($field);
-                if ((($this->platform instanceof MySQLPlatform) &&
-                    in_array($fieldMapping['type'], ['decimal'], true)) ||
-                    (!($this->platform instanceof MySQLPlatform) &&
-                    !in_array($fieldMapping['type'], ['datetime', 'datetimetz', 'date', 'time'], true))) {
+                if ((($this->platform instanceof MySQLPlatform)
+                    && in_array($fieldMapping['type'], ['decimal'], true))
+                    || (!($this->platform instanceof MySQLPlatform)
+                    && !in_array($fieldMapping['type'], ['datetime', 'datetimetz', 'date', 'time'], true))) {
                     $type = Type::getType($fieldMapping['type']);
                     $substituteField = 'CAST('.$substituteField.' AS '.$type->getSQLDeclaration($fieldMapping, $this->platform).')';
                 }
@@ -389,6 +389,10 @@ class TranslationWalker extends SqlWalker
 
     /**
      * Search for translated components in the select clause
+     *
+     * @param array<string, array<string, ClassMetadata>> $queryComponents
+     *
+     * @phpstan-param array<string, array{metadata: ClassMetadata}> $queryComponents
      */
     private function extractTranslatedComponents(array $queryComponents): void
     {
@@ -408,32 +412,32 @@ class TranslationWalker extends SqlWalker
     /**
      * Get the currently used TranslatableListener
      *
-     * @throws \Gedmo\Exception\RuntimeException if listener is not found
+     * @throws RuntimeException if listener is not found
      */
     private function getTranslatableListener(): TranslatableListener
     {
         $em = $this->getEntityManager();
-        foreach ($em->getEventManager()->getListeners() as $event => $listeners) {
-            foreach ($listeners as $hash => $listener) {
+        foreach ($em->getEventManager()->getAllListeners() as $listeners) {
+            foreach ($listeners as $listener) {
                 if ($listener instanceof TranslatableListener) {
                     return $listener;
                 }
             }
         }
 
-        throw new \Gedmo\Exception\RuntimeException('The translation listener could not be found');
+        throw new RuntimeException('The translation listener could not be found');
     }
 
     /**
      * Replaces given sql $str with required
      * results
+     *
+     * @param array<string, string> $repl
      */
     private function replace(array $repl, string $str): string
     {
         foreach ($repl as $target => $result) {
-            $str = preg_replace_callback('/(\s|\()('.$target.')(,?)(\s|\)|$)/smi', static function (array $m) use ($result): string {
-                return $m[1].$result.$m[3].$m[4];
-            }, $str);
+            $str = preg_replace_callback('/(\s|\()('.$target.')(,?)(\s|\)|$)/smi', static fn (array $m): string => $m[1].$result.$m[3].$m[4], $str);
         }
 
         return $str;
@@ -463,7 +467,7 @@ class TranslationWalker extends SqlWalker
                 case 'string':
                 case 'guid':
                     // need to cast to VARCHAR
-                    $component = $component.'::VARCHAR';
+                    $component .= '::VARCHAR';
 
                     break;
             }

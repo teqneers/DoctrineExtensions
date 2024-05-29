@@ -9,7 +9,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Translatable;
+namespace Gedmo\Tests\Translatable\Issue;
 
 use Doctrine\Common\EventManager;
 use Doctrine\ORM\Query;
@@ -26,11 +26,11 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class Issue138Test extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const TRANSLATION = Translation::class;
-    public const TREE_WALKER_TRANSLATION = TranslationWalker::class;
+    private const ARTICLE = Article::class;
+    private const TRANSLATION = Translation::class;
+    private const TREE_WALKER_TRANSLATION = TranslationWalker::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -46,7 +46,7 @@ final class Issue138Test extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testIssue138()
+    public function testIssue138(): void
     {
         $this->populate();
         $dql = 'SELECT a FROM '.self::ARTICLE.' a';
@@ -56,13 +56,13 @@ final class Issue138Test extends BaseTestCaseORM
 
         // array hydration
         $this->translatableListener->setTranslatableLocale('en_us');
-        //die($q->getSQL());
+        // die($q->getSQL());
         $result = $q->getArrayResult();
         static::assertCount(1, $result);
         static::assertSame('Food', $result[0]['title']);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,
@@ -72,8 +72,6 @@ final class Issue138Test extends BaseTestCaseORM
 
     private function populate(): void
     {
-        $repo = $this->em->getRepository(self::ARTICLE);
-
         $food = new Article();
         $food->setTitle('Food');
         $food->setTitleTest('about food');

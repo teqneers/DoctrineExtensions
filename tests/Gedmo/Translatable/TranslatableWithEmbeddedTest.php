@@ -22,15 +22,12 @@ use Gedmo\Translatable\TranslatableListener;
 
 final class TranslatableWithEmbeddedTest extends BaseTestCaseORM
 {
-    public const FIXTURE = Company::class;
-    public const TRANSLATION = Translation::class;
+    private const FIXTURE = Company::class;
+    private const TRANSLATION = Translation::class;
 
-    public const TREE_WALKER_TRANSLATION = TranslationWalker::class;
+    private const TREE_WALKER_TRANSLATION = TranslationWalker::class;
 
-    /**
-     * @var TranslatableListener
-     */
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -46,7 +43,7 @@ final class TranslatableWithEmbeddedTest extends BaseTestCaseORM
         $this->populate();
     }
 
-    public function populate()
+    public function populate(): void
     {
         $entity = new Company();
         $entity->setTitle('test');
@@ -66,9 +63,9 @@ final class TranslatableWithEmbeddedTest extends BaseTestCaseORM
         $this->em->clear();
     }
 
-    public function testTranslate()
+    public function testTranslate(): void
     {
-        /** @var EntityRepository $repo */
+        /** @var EntityRepository<Company> $repo */
         $repo = $this->em->getRepository(self::FIXTURE);
 
         /** @var Company $entity */
@@ -98,7 +95,7 @@ final class TranslatableWithEmbeddedTest extends BaseTestCaseORM
         static::assertSame('facebook-de', $entity->getLink()->getFacebook());
     }
 
-    public function testQueryWalker()
+    public function testQueryWalker(): void
     {
         $dql = 'SELECT f FROM '.self::FIXTURE.' f';
 
@@ -115,7 +112,7 @@ final class TranslatableWithEmbeddedTest extends BaseTestCaseORM
         static::assertSame('facebook-de', $result[0]['link.facebook']);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::FIXTURE,

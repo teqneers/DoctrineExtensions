@@ -11,23 +11,34 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Mapping\Fixture;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Table(name="test_sortable_groups")
  * @ORM\Entity
+ * @ORM\Table(name="test_sortable_groups")
  */
+#[ORM\Entity]
+#[ORM\Table(name: 'test_sortable_groups')]
 class SortableGroup
 {
     /**
-     * @ORM\Column(type="integer")
+     * @var int
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: Types::INTEGER)]
     private $id;
 
     /**
-     * @ORM\Column(length=64)
+     * @var string
+     *
+     * @ORM\Column(type="string", length=64)
      */
+    #[ORM\Column(type: Types::STRING, length: 64)]
     private $name;
 }

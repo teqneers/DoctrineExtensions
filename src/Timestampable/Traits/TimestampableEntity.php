@@ -14,15 +14,19 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
- * Timestampable Trait, usable with PHP >= 5.4
+ * Trait for timestampable objects.
+ *
+ * This implementation provides a mapping configuration for the Doctrine ORM.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
 trait TimestampableEntity
 {
     /**
-     * @var \DateTime
+     * @var \DateTime|null
+     *
      * @Gedmo\Timestampable(on="create")
+     *
      * @ORM\Column(type="datetime")
      */
     #[Gedmo\Timestampable(on: 'create')]
@@ -30,8 +34,10 @@ trait TimestampableEntity
     protected $createdAt;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
+     *
      * @Gedmo\Timestampable(on="update")
+     *
      * @ORM\Column(type="datetime")
      */
     #[Gedmo\Timestampable(on: 'update')]
@@ -53,7 +59,7 @@ trait TimestampableEntity
     /**
      * Returns createdAt.
      *
-     * @return \DateTime
+     * @return \DateTime|null
      */
     public function getCreatedAt()
     {
@@ -75,7 +81,7 @@ trait TimestampableEntity
     /**
      * Returns updatedAt.
      *
-     * @return \DateTime
+     * @return \DateTime|null
      */
     public function getUpdatedAt()
     {

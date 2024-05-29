@@ -25,8 +25,8 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class ProtectedPropertySupperclassTest extends BaseTestCaseORM
 {
-    public const SUPERCLASS = SupperClassExtension::class;
-    public const TRANSLATION = Translation::class;
+    private const SUPERCLASS = SupperClassExtension::class;
+    private const TRANSLATION = Translation::class;
 
     protected function setUp(): void
     {
@@ -41,7 +41,7 @@ final class ProtectedPropertySupperclassTest extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testProtectedProperty()
+    public function testProtectedProperty(): void
     {
         $test = new SupperClassExtension();
         $test->setName('name');
@@ -58,7 +58,7 @@ final class ProtectedPropertySupperclassTest extends BaseTestCaseORM
         static::assertNotNull($test->getCreatedAt());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::TRANSLATION,

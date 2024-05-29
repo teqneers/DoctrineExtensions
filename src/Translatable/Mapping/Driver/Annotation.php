@@ -23,6 +23,8 @@ use Gedmo\Mapping\Driver\AbstractAnnotationDriver;
  * extension.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @internal
  */
 class Annotation extends AbstractAnnotationDriver
 {
@@ -48,9 +50,6 @@ class Annotation extends AbstractAnnotationDriver
      */
     public const LANGUAGE = Language::class;
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $class = $this->getMetaReflectionClass($meta);
@@ -64,9 +63,9 @@ class Annotation extends AbstractAnnotationDriver
 
         // property annotations
         foreach ($class->getProperties() as $property) {
-            if ($meta->isMappedSuperclass && !$property->isPrivate() ||
-                $meta->isInheritedField($property->name) ||
-                isset($meta->associationMappings[$property->name]['inherited'])
+            if ($meta->isMappedSuperclass && !$property->isPrivate()
+                || $meta->isInheritedField($property->name)
+                || isset($meta->associationMappings[$property->name]['inherited'])
             ) {
                 continue;
             }
@@ -123,5 +122,7 @@ class Annotation extends AbstractAnnotationDriver
                 throw new InvalidMappingException("Translatable does not support composite identifiers in class - {$meta->getName()}");
             }
         }
+
+        return $config;
     }
 }

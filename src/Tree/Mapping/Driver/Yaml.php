@@ -21,6 +21,10 @@ use Gedmo\Tree\Mapping\Validator;
  * extension.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @deprecated since gedmo/doctrine-extensions 3.5, will be removed in version 4.0.
+ *
+ * @internal
  */
 class Yaml extends File implements Driver
 {
@@ -34,17 +38,14 @@ class Yaml extends File implements Driver
     /**
      * List of tree strategies available
      *
-     * @var array
+     * @var string[]
      */
-    private $strategies = [
+    private array $strategies = [
         'nested',
         'closure',
         'materializedPath',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $mapping = $this->_getMapping($meta->getName());
@@ -116,10 +117,10 @@ class Yaml extends File implements Driver
                         }
 
                         $treePathInfo = $fieldMapping['gedmo']['treePath'] ?? $fieldMapping['gedmo'][array_search(
-                                'treePath',
-                                $fieldMapping['gedmo'],
-                                true
-                            )];
+                            'treePath',
+                            $fieldMapping['gedmo'],
+                            true
+                        )];
 
                         if (is_array($treePathInfo) && isset($treePathInfo['separator'])) {
                             $separator = $treePathInfo['separator'];
@@ -184,13 +185,13 @@ class Yaml extends File implements Driver
             foreach ($mapping['manyToOne'] as $field => $relationMapping) {
                 if (isset($relationMapping['gedmo'])) {
                     if (in_array('treeParent', $relationMapping['gedmo'], true)) {
-                        if (!$rel = $this->getRelatedClassName($meta, $relationMapping['targetEntity'])) {
+                        if (!$this->getRelatedClassName($meta, $relationMapping['targetEntity'])) {
                             throw new InvalidMappingException("Unable to find ancestor/parent child relation through ancestor field - [{$field}] in class - {$meta->getName()}");
                         }
                         $config['parent'] = $field;
                     }
                     if (in_array('treeRoot', $relationMapping['gedmo'], true)) {
-                        if (!$rel = $this->getRelatedClassName($meta, $relationMapping['targetEntity'])) {
+                        if (!$this->getRelatedClassName($meta, $relationMapping['targetEntity'])) {
                             throw new InvalidMappingException("Unable to find root-descendant relation through root field - [{$field}] in class - {$meta->getName()}");
                         }
                         $config['root'] = $field;
@@ -210,11 +211,10 @@ class Yaml extends File implements Driver
                 throw new InvalidMappingException("Cannot find Tree type for class: {$meta->getName()}");
             }
         }
+
+        return $config;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function _loadMappingFile($file)
     {
         return \Symfony\Component\Yaml\Yaml::parse(file_get_contents($file));

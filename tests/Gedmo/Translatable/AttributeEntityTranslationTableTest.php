@@ -28,11 +28,11 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class AttributeEntityTranslationTableTest extends BaseTestCaseORM
 {
-    public const PERSON = Person::class;
-    public const TRANSLATION = PersonTranslation::class;
-    public const FILE = File::class;
+    private const PERSON = Person::class;
+    private const TRANSLATION = PersonTranslation::class;
+    private const FILE = File::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -57,7 +57,7 @@ final class AttributeEntityTranslationTableTest extends BaseTestCaseORM
         $this->em->clear();
 
         $repo = $this->em->getRepository(self::TRANSLATION);
-        static::assertTrue($repo instanceof TranslationRepository);
+        static::assertInstanceOf(TranslationRepository::class, $repo);
 
         $translations = $repo->findTranslations($person);
         // As Translate locale and Default locale are the same, no records should be present in translations table
@@ -108,7 +108,7 @@ final class AttributeEntityTranslationTableTest extends BaseTestCaseORM
         static::assertSame('title in de', $file->getTitle());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::PERSON,

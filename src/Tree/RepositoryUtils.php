@@ -9,24 +9,31 @@
 
 namespace Gedmo\Tree;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
 use Gedmo\Exception\InvalidArgumentException;
 use Gedmo\Tool\Wrapper\EntityWrapper;
 use Gedmo\Tool\Wrapper\MongoDocumentWrapper;
 
+/**
+ * @final since gedmo/doctrine-extensions 3.11
+ *
+ * @template T of object
+ */
 class RepositoryUtils implements RepositoryUtilsInterface
 {
-    /** @var \Doctrine\Persistence\Mapping\ClassMetadata */
+    /** @var ClassMetadata<T> */
     protected $meta;
 
-    /** @var \Gedmo\Tree\TreeListener */
+    /** @var TreeListener */
     protected $listener;
 
-    /** @var \Doctrine\Persistence\ObjectManager */
+    /** @var ObjectManager&(DocumentManager|EntityManagerInterface) */
     protected $om;
 
-    /** @var \Gedmo\Tree\RepositoryInterface */
+    /** @var RepositoryInterface<T> */
     protected $repo;
 
     /**
@@ -37,6 +44,12 @@ class RepositoryUtils implements RepositoryUtilsInterface
      */
     protected $childrenIndex = '__children';
 
+    /**
+     * @param ObjectManager&(DocumentManager|EntityManagerInterface) $om
+     * @param ClassMetadata<T>                                       $meta
+     * @param TreeListener                                           $listener
+     * @param RepositoryInterface<T>                                 $repo
+     */
     public function __construct(ObjectManager $om, ClassMetadata $meta, $listener, $repo)
     {
         $this->om = $om;
@@ -45,21 +58,21 @@ class RepositoryUtils implements RepositoryUtilsInterface
         $this->repo = $repo;
     }
 
+    /**
+     * @return ClassMetadata<T>
+     */
     public function getClassMetadata()
     {
         return $this->meta;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function childrenHierarchy($node = null, $direct = false, array $options = [], $includeNode = false)
     {
         $meta = $this->getClassMetadata();
 
         if (null !== $node) {
             if (is_a($node, $meta->getName())) {
-                $wrapperClass = $this->om instanceof \Doctrine\ORM\EntityManagerInterface ?
+                $wrapperClass = $this->om instanceof EntityManagerInterface ?
                     EntityWrapper::class :
                     MongoDocumentWrapper::class;
                 $wrapped = new $wrapperClass($node, $this->om);
@@ -77,9 +90,6 @@ class RepositoryUtils implements RepositoryUtilsInterface
         return $this->repo->buildTree($nodes, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildTree(array $nodes, array $options = [])
     {
         $meta = $this->getClassMetadata();
@@ -110,7 +120,7 @@ class RepositoryUtils implements RepositoryUtilsInterface
             return $nestedTree;
         }
 
-        if (!count($nestedTree)) {
+        if ([] === $nestedTree) {
             return '';
         }
 
@@ -121,7 +131,7 @@ class RepositoryUtils implements RepositoryUtilsInterface
             foreach ($tree as $node) {
                 $output .= is_string($options['childOpen']) ? $options['childOpen'] : $options['childOpen']($node);
                 $output .= $options['nodeDecorator']($node);
-                if (count($node[$childrenIndex]) > 0) {
+                if ([] !== $node[$childrenIndex]) {
                     $output .= $build($node[$childrenIndex]);
                 }
                 $output .= is_string($options['childClose']) ? $options['childClose'] : $options['childClose']($node);
@@ -133,9 +143,6 @@ class RepositoryUtils implements RepositoryUtilsInterface
         return $build($nestedTree);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildTreeArray(array $nodes)
     {
         $meta = $this->getClassMetadata();
@@ -143,7 +150,7 @@ class RepositoryUtils implements RepositoryUtilsInterface
         $nestedTree = [];
         $l = 0;
 
-        if (count($nodes) > 0) {
+        if ([] !== $nodes) {
             // Node Stack. Used to help building the hierarchy
             $stack = [];
             foreach ($nodes as $child) {
@@ -174,17 +181,11 @@ class RepositoryUtils implements RepositoryUtilsInterface
         return $nestedTree;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setChildrenIndex($childrenIndex)
     {
         $this->childrenIndex = $childrenIndex;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getChildrenIndex()
     {
         return $this->childrenIndex;

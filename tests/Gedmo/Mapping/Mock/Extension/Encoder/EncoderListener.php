@@ -12,12 +12,15 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Mapping\Mock\Extension\Encoder;
 
 use Doctrine\Common\EventArgs;
+use Doctrine\Persistence\Event\LoadClassMetadataEventArgs;
+use Doctrine\Persistence\Mapping\ClassMetadata;
+use Doctrine\Persistence\ObjectManager;
 use Gedmo\Mapping\Event\AdapterInterface as EventAdapterInterface;
 use Gedmo\Mapping\MappedEventSubscriber;
 
 class EncoderListener extends MappedEventSubscriber
 {
-    public function getSubscribedEvents()
+    public function getSubscribedEvents(): array
     {
         return [
             'onFlush',
@@ -25,7 +28,10 @@ class EncoderListener extends MappedEventSubscriber
         ];
     }
 
-    public function loadClassMetadata(EventArgs $args)
+    /**
+     * @phpstan-param LoadClassMetadataEventArgs<ClassMetadata<object>, ObjectManager> $args
+     */
+    public function loadClassMetadata(LoadClassMetadataEventArgs $args): void
     {
         $ea = $this->getEventAdapter($args);
         // this will check for our metadata
@@ -35,7 +41,7 @@ class EncoderListener extends MappedEventSubscriber
         );
     }
 
-    public function onFlush(EventArgs $args)
+    public function onFlush(EventArgs $args): void
     {
         $ea = $this->getEventAdapter($args);
         $om = $ea->getObjectManager();
@@ -59,12 +65,15 @@ class EncoderListener extends MappedEventSubscriber
         }
     }
 
-    protected function getNamespace()
+    protected function getNamespace(): string
     {
         // mapper must know the namespace of extension
         return __NAMESPACE__;
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     private function encode(EventAdapterInterface $ea, object $object, array $config): void
     {
         $om = $ea->getObjectManager();

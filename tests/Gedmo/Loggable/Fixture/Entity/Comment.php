@@ -13,19 +13,22 @@ namespace Gedmo\Tests\Loggable\Fixture\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Loggable\Loggable;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Tests\Loggable\Fixture\Entity\Log\Comment as CommentLog;
 
 /**
  * @ORM\Entity
+ *
  * @Gedmo\Loggable(logEntryClass="Gedmo\Tests\Loggable\Fixture\Entity\Log\Comment")
  */
 #[ORM\Entity]
 #[Gedmo\Loggable(logEntryClass: CommentLog::class)]
-class Comment
+class Comment implements Loggable
 {
     /**
      * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
@@ -36,31 +39,31 @@ class Comment
     private $id;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ORM\Column(length=128)
      */
     #[ORM\Column(length: 128)]
     #[Gedmo\Versioned]
-    private $subject;
+    private ?string $subject = null;
 
     /**
-     * @var string|null
      * @Gedmo\Versioned
+     *
      * @ORM\Column(type="text")
      */
     #[ORM\Column(type: Types::TEXT)]
     #[Gedmo\Versioned]
-    private $message;
+    private ?string $message = null;
 
     /**
-     * @var RelatedArticle|null
      * @Gedmo\Versioned
+     *
      * @ORM\ManyToOne(targetEntity="RelatedArticle", inversedBy="comments")
      */
     #[ORM\ManyToOne(targetEntity: RelatedArticle::class, inversedBy: 'comments')]
     #[Gedmo\Versioned]
-    private $article;
+    private ?RelatedArticle $article = null;
 
     public function setArticle(?RelatedArticle $article): void
     {

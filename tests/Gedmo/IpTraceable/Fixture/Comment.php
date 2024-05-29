@@ -35,33 +35,28 @@ class Comment implements IpTraceable
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="message", type="text")
      */
     #[ORM\Column(name: 'message', type: Types::TEXT)]
-    private $message;
+    private ?string $message = null;
 
     /**
-     * @var Article|null
-     *
      * @ORM\ManyToOne(targetEntity="Gedmo\Tests\IpTraceable\Fixture\Article", inversedBy="comments")
      */
     #[ORM\ManyToOne(targetEntity: Article::class, inversedBy: 'comments')]
-    private $article;
+    private ?Article $article = null;
 
     /**
-     * @var int|null
-     *
      * @ORM\Column(type="integer")
      */
     #[ORM\Column(type: Types::INTEGER)]
-    private $status;
+    private ?int $status = null;
 
     /**
      * @var string|null
      *
      * @ORM\Column(name="closed", type="string", length=45, nullable=true)
+     *
      * @Gedmo\IpTraceable(on="change", field="status", value=1)
      */
     #[ORM\Column(name: 'closed', type: Types::STRING, length: 45, nullable: true)]
@@ -72,6 +67,7 @@ class Comment implements IpTraceable
      * @var string|null
      *
      * @ORM\Column(name="modified", type="string", length=45)
+     *
      * @Gedmo\IpTraceable(on="update")
      */
     #[ORM\Column(name: 'modified', type: Types::STRING, length: 45)]

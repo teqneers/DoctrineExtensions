@@ -24,18 +24,18 @@ use Gedmo\Tests\Translator\Fixture\PersonCustom;
  */
 final class TranslatableTest extends BaseTestCaseORM
 {
-    public const PERSON = Person::class;
-    public const PERSON_CUSTOM_PROXY = PersonCustom::class;
+    private const PERSON = Person::class;
+    private const PERSON_CUSTOM_PROXY = PersonCustom::class;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $evm = new EventManager();
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    public function testTranslatable()
+    public function testTranslatable(): void
     {
         $person = new Person();
         $person->setName('Jen');
@@ -66,7 +66,7 @@ final class TranslatableTest extends BaseTestCaseORM
             ->select('p, t')
             ->join('p.translations', 't')
             ->getQuery()
-            ->execute();
+            ->getResult();
         $person = $persons[0];
 
         static::assertSame('Jen', $person->getName());
@@ -84,7 +84,7 @@ final class TranslatableTest extends BaseTestCaseORM
             ->select('p, t')
             ->join('p.translations', 't')
             ->getQuery()
-            ->execute();
+            ->getResult();
         $person = $persons[0];
 
         static::assertSame('Jen', $person->getName());
@@ -93,10 +93,7 @@ final class TranslatableTest extends BaseTestCaseORM
         static::assertSame('multilingual description', $person->translate('ru_RU')->getDescription());
     }
 
-    /**
-     * @test
-     */
-    public function shouldTranslateRelation()
+    public function testShouldTranslateRelation(): void
     {
         $person = new Person();
         $person->setName('Jen');
@@ -105,7 +102,7 @@ final class TranslatableTest extends BaseTestCaseORM
         $person->translate('ru')->setDescription('multilingual description');
 
         $parent = new Person();
-        $parent->setName('Jen');
+        $parent->setName('Jen parent');
         $parent->translate('ru')->setName('Женя starshai');
         $parent->translate('fr')->setName('zenia');
         $parent->setDescription('description');
@@ -126,10 +123,7 @@ final class TranslatableTest extends BaseTestCaseORM
         static::assertSame('zenia', $parent->translate('fr')->getName());
     }
 
-    /**
-     * @test
-     */
-    public function shouldHandleDomainObjectProxy()
+    public function testShouldHandleDomainObjectProxy(): void
     {
         $person = new Person();
         $person->setName('Jen');
@@ -147,7 +141,7 @@ final class TranslatableTest extends BaseTestCaseORM
         static::assertSame('Женя', $name);
     }
 
-    public function testTranslatableProxyWithUpperCaseProperty()
+    public function testTranslatableProxyWithUpperCaseProperty(): void
     {
         $person = new Person();
         $person->setName('Jen');
@@ -169,7 +163,7 @@ final class TranslatableTest extends BaseTestCaseORM
         static::assertSame('Абрамович', $lastName);
     }
 
-    public function testTranslatableWithMagicProperties()
+    public function testTranslatableWithMagicProperties(): void
     {
         $person = new Person();
         $person->translate('en')->setName('Jen');
@@ -183,7 +177,7 @@ final class TranslatableTest extends BaseTestCaseORM
         static::assertSame('multilingual description', $person->description);
     }
 
-    public function testTranslatableWithCustomProxy()
+    public function testTranslatableWithCustomProxy(): void
     {
         $person = new PersonCustom();
         $person->setName('Jen');
@@ -214,7 +208,7 @@ final class TranslatableTest extends BaseTestCaseORM
             ->select('p, t')
             ->join('p.translations', 't')
             ->getQuery()
-            ->execute();
+            ->getResult();
         $person = $persons[0];
 
         static::assertSame('Jen', $person->getName());
@@ -232,7 +226,7 @@ final class TranslatableTest extends BaseTestCaseORM
             ->select('p, t')
             ->join('p.translations', 't')
             ->getQuery()
-            ->execute();
+            ->getResult();
         $person = $persons[0];
 
         static::assertSame('Jen', $person->getName());
@@ -241,7 +235,7 @@ final class TranslatableTest extends BaseTestCaseORM
         static::assertSame('multilingual description', $person->translate('ru_RU')->getDescription());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::PERSON, self::PERSON.'Translation',

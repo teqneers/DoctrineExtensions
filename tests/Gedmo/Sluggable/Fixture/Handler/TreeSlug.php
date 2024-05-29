@@ -16,14 +16,18 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Gedmo\Sluggable\Handler\TreeSlugHandler;
 use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
+use Gedmo\Tree\Node;
 
 /**
  * @Gedmo\Tree(type="nested")
+ *
  * @ORM\Entity(repositoryClass="Gedmo\Tree\Entity\Repository\NestedTreeRepository")
  */
 #[ORM\Entity(repositoryClass: NestedTreeRepository::class)]
-class TreeSlug
+#[Gedmo\Tree(type: 'nested')]
+class TreeSlug implements Node
 {
     /**
      * @var int|null
@@ -38,85 +42,96 @@ class TreeSlug
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="title", type="string", length=64)
      */
     #[ORM\Column(name: 'title', type: Types::STRING, length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(fields={"title"}, handlers={
-     *      @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\TreeSlugHandler", options={
-     *          @Gedmo\SlugHandlerOption(name="parentRelationField", value="parent"),
-     *          @Gedmo\SlugHandlerOption(name="separator", value="/")
-     *      })
+     *     @Gedmo\SlugHandler(class="Gedmo\Sluggable\Handler\TreeSlugHandler", options={
+     *         @Gedmo\SlugHandlerOption(name="parentRelationField", value="parent"),
+     *         @Gedmo\SlugHandlerOption(name="separator", value="/")
+     *     })
      * }, separator="-", updatable=true)
+     *
      * @ORM\Column(name="slug", type="string", length=64, unique=true)
      */
+    #[Gedmo\Slug(fields: ['title'], separator: '-', updatable: true)]
+    #[Gedmo\SlugHandler(class: TreeSlugHandler::class, options: ['parentRelationField' => 'parent', 'separator' => '/'])]
     #[ORM\Column(name: 'slug', type: Types::STRING, length: 64, unique: true)]
     private $slug;
 
     /**
-     * @var self|null
-     *
      * @Gedmo\TreeParent
+     *
      * @ORM\ManyToOne(targetEntity="TreeSlug")
      * @ORM\JoinColumn(name="parent_id", referencedColumnName="id", onDelete="CASCADE")
      */
     #[ORM\ManyToOne(targetEntity: self::class)]
     #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    private $parent;
+    #[Gedmo\TreeParent]
+    private ?TreeSlug $parent = null;
 
     /**
      * @var Collection<int, self>
      */
-    private $children;
+    private Collection $children;
 
     /**
      * @var int|null
      *
      * @Gedmo\TreeLeft
+     *
      * @ORM\Column(type="integer")
      */
     #[ORM\Column(type: Types::INTEGER)]
+    #[Gedmo\TreeLeft]
     private $lft;
 
     /**
      * @var int|null
      *
      * @Gedmo\TreeRight
+     *
      * @ORM\Column(type="integer")
      */
     #[ORM\Column(type: Types::INTEGER)]
+    #[Gedmo\TreeRight]
     private $rgt;
 
     /**
      * @var int|null
      *
      * @Gedmo\TreeRoot
+     *
      * @ORM\Column(type="integer")
      */
     #[ORM\Column(type: Types::INTEGER)]
+    #[Gedmo\TreeRoot]
     private $root;
 
     /**
      * @var int|null
      *
      * @Gedmo\TreeLevel
+     *
      * @ORM\Column(name="lvl", type="integer")
      */
     #[ORM\Column(name: 'lvl', type: Types::INTEGER)]
+    #[Gedmo\TreeLevel]
     private $level;
+
+    private ?Node $sibling = null;
 
     public function __construct()
     {
         $this->children = new ArrayCollection();
     }
 
-    public function setParent(self $parent = null): void
+    public function setParent(?self $parent = null): void
     {
         $this->parent = $parent;
     }
@@ -172,5 +187,15 @@ class TreeSlug
     public function getSlug(): ?string
     {
         return $this->slug;
+    }
+
+    public function setSibling(Node $node): void
+    {
+        $this->sibling = $node;
+    }
+
+    public function getSibling(): ?Node
+    {
+        return $this->sibling;
     }
 }

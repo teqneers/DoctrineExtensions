@@ -12,7 +12,7 @@ namespace Gedmo\References\Mapping\Event\Adapter;
 use Doctrine\ODM\MongoDB\DocumentManager as MongoDocumentManager;
 use Doctrine\ODM\PHPCR\DocumentManager as PhpcrDocumentManager;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Proxy\Proxy as ORMProxy;
+use Doctrine\Persistence\Proxy as PersistenceProxy;
 use Gedmo\Exception\InvalidArgumentException;
 use Gedmo\Mapping\Event\Adapter\ORM as BaseAdapterORM;
 use Gedmo\References\Mapping\Event\ReferencesAdapter;
@@ -27,9 +27,6 @@ use ProxyManager\Proxy\GhostObjectInterface;
  */
 final class ORM extends BaseAdapterORM implements ReferencesAdapter
 {
-    /**
-     * {@inheritdoc}
-     */
     public function getIdentifier($om, $object, $single = true)
     {
         if ($om instanceof EntityManagerInterface) {
@@ -66,9 +63,6 @@ final class ORM extends BaseAdapterORM implements ReferencesAdapter
         return null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getSingleReference($om, $class, $identifier)
     {
         $this->throwIfNotDocumentManager($om);
@@ -83,12 +77,9 @@ final class ORM extends BaseAdapterORM implements ReferencesAdapter
         return $om->getReference($class, $identifier);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function extractIdentifier($om, $object, $single = true)
     {
-        if ($object instanceof ORMProxy) {
+        if ($object instanceof PersistenceProxy) {
             $id = $om->getUnitOfWork()->getEntityIdentifier($object);
         } else {
             $meta = $om->getClassMetadata(get_class($object));
@@ -111,6 +102,10 @@ final class ORM extends BaseAdapterORM implements ReferencesAdapter
 
     /**
      * Override so we don't get an exception. We want to allow this.
+     *
+     * @param mixed $dm
+     *
+     * @phpstan-assert MongoDocumentManager|PhpcrDocumentManager $dm
      */
     private function throwIfNotDocumentManager($dm): void
     {

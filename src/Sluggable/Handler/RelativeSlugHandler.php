@@ -23,6 +23,8 @@ use Gedmo\Tool\Wrapper\AbstractWrapper;
  * where path separator separates the relative slug
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class RelativeSlugHandler implements SlugHandlerInterface
 {
@@ -41,7 +43,7 @@ class RelativeSlugHandler implements SlugHandlerInterface
     /**
      * Used options
      *
-     * @var array
+     * @var array<string, mixed>
      */
     private $usedOptions;
 
@@ -66,9 +68,6 @@ class RelativeSlugHandler implements SlugHandlerInterface
         $this->sluggable = $sluggable;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onChangeDecision(SluggableAdapter $ea, array &$config, $object, &$slug, &$needToChangeSlug)
     {
         $this->om = $ea->getObjectManager();
@@ -85,18 +84,12 @@ class RelativeSlugHandler implements SlugHandlerInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function postSlugBuild(SluggableAdapter $ea, array &$config, $object, &$slug)
     {
         $this->originalTransliterator = $this->sluggable->getTransliterator();
         $this->sluggable->setTransliterator([$this, 'transliterate']);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function validate(array $options, ClassMetadata $meta)
     {
         if (!$meta->isSingleValuedAssociation($options['relationField'])) {
@@ -104,9 +97,6 @@ class RelativeSlugHandler implements SlugHandlerInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onSlugCompletion(SluggableAdapter $ea, array &$config, $object, &$slug)
     {
     }
@@ -147,9 +137,6 @@ class RelativeSlugHandler implements SlugHandlerInterface
         return $result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function handlesUrlization()
     {
         return true;

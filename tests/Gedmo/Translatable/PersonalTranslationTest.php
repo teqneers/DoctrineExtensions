@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Gedmo\Tests\Translatable;
 
 use Doctrine\Common\EventManager;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\Query;
 use Gedmo\Tests\Tool\BaseTestCaseORM;
 use Gedmo\Tests\Translatable\Fixture\Personal\Article;
@@ -26,11 +27,11 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class PersonalTranslationTest extends BaseTestCaseORM
 {
-    public const ARTICLE = Article::class;
-    public const TRANSLATION = PersonalArticleTranslation::class;
-    public const TREE_WALKER_TRANSLATION = TranslationWalker::class;
+    private const ARTICLE = Article::class;
+    private const TRANSLATION = PersonalArticleTranslation::class;
+    private const TREE_WALKER_TRANSLATION = TranslationWalker::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -41,22 +42,10 @@ final class PersonalTranslationTest extends BaseTestCaseORM
         $this->translatableListener->setTranslatableLocale('en');
         $this->translatableListener->setDefaultLocale('en');
         $evm->addEventSubscriber($this->translatableListener);
-
-        $conn = [
-            'driver' => 'pdo_mysql',
-            'host' => '127.0.0.1',
-            'dbname' => 'test',
-            'user' => 'root',
-            'password' => 'nimda',
-        ];
-        //$this->getMockCustomEntityManager($conn, $evm);
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldPersistDefaultLocaleTranslationIfRequired()
+    public function testShouldPersistDefaultLocaleTranslationIfRequired(): void
     {
         $this->translatableListener->setPersistDefaultLocaleTranslation(true);
         $this->populate();
@@ -65,10 +54,7 @@ final class PersonalTranslationTest extends BaseTestCaseORM
         static::assertCount(3, $translations);
     }
 
-    /**
-     * @test
-     */
-    public function shouldCreateTranslations()
+    public function testShouldCreateTranslations(): void
     {
         $this->populate();
         $article = $this->em->find(self::ARTICLE, ['id' => 1]);
@@ -76,27 +62,39 @@ final class PersonalTranslationTest extends BaseTestCaseORM
         static::assertCount(2, $translations);
     }
 
-    /**
-     * @test
-     */
-    public function shouldTranslateTheRecord()
+    public function testShouldTranslateTheRecord(): void
     {
         $this->populate();
         $this->translatableListener->setTranslatableLocale('lt');
 
-        $this->startQueryLog();
+        $this->queryLogger->reset();
+
         $article = $this->em->find(self::ARTICLE, ['id' => 1]);
 
-        $sqlQueriesExecuted = $this->queryAnalyzer->getExecutedQueries();
-        static::assertCount(2, $sqlQueriesExecuted);
-        static::assertSame('SELECT t0.id AS id_1, t0.locale AS locale_2, t0.field AS field_3, t0.content AS content_4, t0.object_id AS object_id_5 FROM article_translations t0 WHERE t0.object_id = 1', $sqlQueriesExecuted[1]);
+        static::assertCount(2, $this->queryLogger->queries);
+
+        static::assertSame([
+            'message' => 'Executing statement: {sql} (parameters: {params}, types: {types})',
+            'context' => [
+                'sql' => 'SELECT t0.id AS id_1, t0.title AS title_2 FROM Article t0 WHERE t0.id = ?',
+                'params' => [1 => 1],
+                'types' => [1 => ParameterType::INTEGER],
+            ],
+        ], $this->queryLogger->queries[0]);
+
+        static::assertSame([
+            'message' => 'Executing statement: {sql} (parameters: {params}, types: {types})',
+            'context' => [
+                'sql' => 'SELECT t0.id AS id_1, t0.locale AS locale_2, t0.field AS field_3, t0.content AS content_4, t0.object_id AS object_id_5 FROM article_translations t0 WHERE t0.object_id = ?',
+                'params' => [1 => 1],
+                'types' => [1 => ParameterType::INTEGER],
+            ],
+        ], $this->queryLogger->queries[1]);
+
         static::assertSame('lt', $article->getTitle());
     }
 
-    /**
-     * @test
-     */
-    public function shouldCascadeDeletionsByForeignKeyConstraints()
+    public function testShouldCascadeDeletionsByForeignKeyConstraints(): void
     {
         if ('sqlite' === $this->em->getConnection()->getDatabasePlatform()->getName()) {
             static::markTestSkipped('Foreign key constraints does not map in sqlite.');
@@ -108,10 +106,7 @@ final class PersonalTranslationTest extends BaseTestCaseORM
         static::assertCount(0, $trans);
     }
 
-    /**
-     * @test
-     */
-    public function shouldOverrideTranslationInEntityBeingTranslated()
+    public function testShouldOverrideTranslationInEntityBeingTranslated(): void
     {
         $this->translatableListener->setDefaultLocale('de');
         $article = new Article();
@@ -135,10 +130,8 @@ final class PersonalTranslationTest extends BaseTestCaseORM
 
     /**
      * Covers issue #438
-     *
-     * @test
      */
-    public function shouldPersistDefaultLocaleValue()
+    public function testShouldPersistDefaultLocaleValue(): void
     {
         $this->translatableListener->setTranslatableLocale('de');
         $article = new Article();
@@ -175,10 +168,7 @@ final class PersonalTranslationTest extends BaseTestCaseORM
         }
     }
 
-    /**
-     * @test
-     */
-    public function shouldFindFromIdentityMap()
+    public function testShouldFindFromIdentityMap(): void
     {
         $article = new Article();
         $article->setTitle('en');
@@ -194,21 +184,43 @@ final class PersonalTranslationTest extends BaseTestCaseORM
         $this->em->persist($article);
         $this->em->flush();
 
-        $this->startQueryLog();
+        $this->queryLogger->reset();
+
         $this->translatableListener->setTranslatableLocale('lt');
         $article->setTitle('change lt');
 
         $this->em->persist($article);
         $this->em->flush();
-        $sqlQueriesExecuted = $this->queryAnalyzer->getExecutedQueries();
-        static::assertCount(3, $sqlQueriesExecuted); // one update, transaction start - commit
-        static::assertSame("UPDATE article_translations SET content = 'change lt' WHERE id = 1", $sqlQueriesExecuted[1]);
+
+        static::assertCount(3, $this->queryLogger->queries);
+
+        static::assertSame([
+            'message' => 'Beginning transaction',
+            'context' => [],
+        ], $this->queryLogger->queries[0]);
+
+        static::assertSame([
+            'message' => 'Executing statement: {sql} (parameters: {params}, types: {types})',
+            'context' => [
+                'sql' => 'UPDATE article_translations SET content = ? WHERE id = ?',
+                'params' => [
+                    1 => 'change lt',
+                    2 => 1,
+                ],
+                'types' => [
+                    1 => ParameterType::STRING,
+                    2 => ParameterType::INTEGER,
+                ],
+            ],
+        ], $this->queryLogger->queries[1]);
+
+        static::assertSame([
+            'message' => 'Committing transaction',
+            'context' => [],
+        ], $this->queryLogger->queries[2]);
     }
 
-    /**
-     * @test
-     */
-    public function shouldBeAbleToUseTranslationQueryHint()
+    public function testShouldBeAbleToUseTranslationQueryHint(): void
     {
         $this->populate();
         $dql = 'SELECT a.title FROM '.self::ARTICLE.' a';
@@ -218,17 +230,24 @@ final class PersonalTranslationTest extends BaseTestCaseORM
             ->setHint(TranslatableListener::HINT_TRANSLATABLE_LOCALE, 'lt')
         ;
 
-        $this->startQueryLog();
+        $this->queryLogger->reset();
+
         $result = $query->getArrayResult();
 
         static::assertCount(1, $result);
         static::assertSame('lt', $result[0]['title']);
-        $sqlQueriesExecuted = $this->queryAnalyzer->getExecutedQueries();
-        static::assertCount(1, $sqlQueriesExecuted);
-        static::assertSame("SELECT CAST(t1_.content AS VARCHAR(128)) AS title_0 FROM Article a0_ LEFT JOIN article_translations t1_ ON t1_.locale = 'lt' AND t1_.field = 'title' AND t1_.object_id = a0_.id", $sqlQueriesExecuted[0]);
+
+        static::assertCount(1, $this->queryLogger->queries);
+
+        static::assertSame([
+            'message' => 'Executing query: {sql}',
+            'context' => [
+                'sql' => "SELECT CAST(t1_.content AS VARCHAR(128)) AS title_0 FROM Article a0_ LEFT JOIN article_translations t1_ ON t1_.locale = 'lt' AND t1_.field = 'title' AND t1_.object_id = a0_.id",
+            ],
+        ], $this->queryLogger->queries[0]);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::ARTICLE,

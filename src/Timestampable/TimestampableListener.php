@@ -18,6 +18,8 @@ use Gedmo\Timestampable\Mapping\Event\TimestampableAdapter;
  * dates on creation and update.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class TimestampableListener extends AbstractTrackingListener
 {
@@ -33,9 +35,6 @@ class TimestampableListener extends AbstractTrackingListener
         return $eventAdapter->getDateValue($meta, $field);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getNamespace()
     {
         return __NAMESPACE__;

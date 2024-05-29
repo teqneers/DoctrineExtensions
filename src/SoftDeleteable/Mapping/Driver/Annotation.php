@@ -22,6 +22,8 @@ use Gedmo\SoftDeleteable\Mapping\Validator;
  *
  * @author Gustavo Falco <comfortablynumb84@gmail.com>
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @internal
  */
 class Annotation extends AbstractAnnotationDriver
 {
@@ -30,9 +32,6 @@ class Annotation extends AbstractAnnotationDriver
      */
     public const SOFT_DELETEABLE = SoftDeleteable::class;
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $class = $this->getMetaReflectionClass($meta);
@@ -62,5 +61,7 @@ class Annotation extends AbstractAnnotationDriver
         }
 
         $this->validateFullMetadata($meta, $config);
+
+        return $config;
     }
 }

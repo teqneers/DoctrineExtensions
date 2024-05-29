@@ -22,6 +22,8 @@ use Gedmo\Mapping\Annotation as Gedmo;
 class Sport
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
@@ -33,39 +35,40 @@ class Sport
 
     /**
      * @Gedmo\Translatable
+     *
      * @ORM\Column(length=128)
      */
     #[Gedmo\Translatable]
     #[ORM\Column(length: 128)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @ORM\Column(type="text", nullable=true)
      */
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private $description;
+    private ?string $description = null;
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setTitle($title)
+    public function setTitle(?string $title): void
     {
         $this->title = $title;
     }
 
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    public function setDescription($description)
+    public function setDescription(?string $description): void
     {
         $this->description = $description;
     }
 
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }

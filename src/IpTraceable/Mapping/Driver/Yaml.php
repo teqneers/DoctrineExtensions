@@ -9,6 +9,7 @@
 
 namespace Gedmo\IpTraceable\Mapping\Driver;
 
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Gedmo\Exception\InvalidMappingException;
 use Gedmo\Mapping\Driver;
 use Gedmo\Mapping\Driver\File;
@@ -20,9 +21,22 @@ use Gedmo\Mapping\Driver\File;
  * extension.
  *
  * @author Pierre-Charles Bertineau <pc.bertineau@alterphp.com>
+ *
+ * @deprecated since gedmo/doctrine-extensions 3.5, will be removed in version 4.0.
+ *
+ * @internal
  */
 class Yaml extends File implements Driver
 {
+    /**
+     * List of types which are valid for IP
+     *
+     * @var string[]
+     */
+    private const VALID_TYPES = [
+        'string',
+    ];
+
     /**
      * File extension
      *
@@ -30,18 +44,6 @@ class Yaml extends File implements Driver
      */
     protected $_extension = '.dcm.yml';
 
-    /**
-     * List of types which are valid for IP
-     *
-     * @var array
-     */
-    private $validTypes = [
-        'string',
-    ];
-
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $mapping = $this->_getMapping($meta->getName());
@@ -106,12 +108,11 @@ class Yaml extends File implements Driver
                     $config[$mappingProperty['on']][] = $field;
                 }
             }
+
+            return $config;
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function _loadMappingFile($file)
     {
         return \Symfony\Component\Yaml\Yaml::parse(file_get_contents($file));
@@ -120,8 +121,8 @@ class Yaml extends File implements Driver
     /**
      * Checks if $field type is valid
      *
-     * @param object $meta
-     * @param string $field
+     * @param ClassMetadata $meta
+     * @param string        $field
      *
      * @return bool
      */
@@ -129,6 +130,6 @@ class Yaml extends File implements Driver
     {
         $mapping = $meta->getFieldMapping($field);
 
-        return $mapping && in_array($mapping['type'], $this->validTypes, true);
+        return $mapping && in_array($mapping['type'], self::VALID_TYPES, true);
     }
 }

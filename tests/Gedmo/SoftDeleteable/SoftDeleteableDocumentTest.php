@@ -12,11 +12,13 @@ declare(strict_types=1);
 namespace Gedmo\Tests\SoftDeleteable;
 
 use Doctrine\Common\EventManager;
-use Doctrine\Common\EventSubscriber;
 use Gedmo\SoftDeleteable\Filter\ODM\SoftDeleteableFilter;
 use Gedmo\SoftDeleteable\SoftDeleteableListener;
 use Gedmo\Tests\SoftDeleteable\Fixture\Document\User;
 use Gedmo\Tests\SoftDeleteable\Fixture\Document\UserTimeAware;
+use Gedmo\Tests\SoftDeleteable\Fixture\Listener\WithLifecycleEventArgsFromODMTypeListener;
+use Gedmo\Tests\SoftDeleteable\Fixture\Listener\WithoutTypeListener;
+use Gedmo\Tests\SoftDeleteable\Fixture\Listener\WithPreAndPostSoftDeleteEventArgsTypeListener;
 use Gedmo\Tests\Tool\BaseTestCaseMongoODM;
 
 /**
@@ -28,22 +30,11 @@ use Gedmo\Tests\Tool\BaseTestCaseMongoODM;
  */
 final class SoftDeleteableDocumentTest extends BaseTestCaseMongoODM
 {
-    public const ARTICLE_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\Article';
-    public const COMMENT_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\Comment';
-    public const PAGE_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\Page';
-    public const MEGA_PAGE_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\MegaPage';
-    public const MODULE_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\Module';
-    public const OTHER_ARTICLE_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\OtherArticle';
-    public const OTHER_COMMENT_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\OtherComment';
-    public const USER_CLASS = User::class;
-    public const USER__TIME_AWARE_CLASS = UserTimeAware::class;
-    public const MAPPED_SUPERCLASS_CHILD_CLASS = 'Gedmo\Tests\SoftDeleteable\Fixture\Document\Child';
-    public const SOFT_DELETEABLE_FILTER_NAME = 'soft-deleteable';
+    private const USER_CLASS = User::class;
+    private const USER__TIME_AWARE_CLASS = UserTimeAware::class;
+    private const SOFT_DELETEABLE_FILTER_NAME = 'soft-deleteable';
 
-    /**
-     * @var SoftDeleteableListener
-     */
-    private $softDeleteableListener;
+    private SoftDeleteableListener $softDeleteableListener;
 
     protected function setUp(): void
     {
@@ -59,10 +50,7 @@ final class SoftDeleteableDocumentTest extends BaseTestCaseMongoODM
         $this->dm->getFilterCollection()->enable(self::SOFT_DELETEABLE_FILTER_NAME);
     }
 
-    /**
-     * @test
-     */
-    public function shouldSoftlyDeleteIfColumnNameDifferFromPropertyName(): void
+    public function testShouldSoftlyDeleteIfColumnNameDifferFromPropertyName(): void
     {
         $repo = $this->dm->getRepository(self::USER_CLASS);
 
@@ -135,7 +123,7 @@ final class SoftDeleteableDocumentTest extends BaseTestCaseMongoODM
 
         $repo = $this->dm->getRepository(self::USER__TIME_AWARE_CLASS);
 
-        //Find entity with deletedAt date in future
+        // Find entity with deletedAt date in future
         $newUser = new User();
         $username = 'test_user';
         $newUser->setUsername($username);
@@ -148,7 +136,7 @@ final class SoftDeleteableDocumentTest extends BaseTestCaseMongoODM
         $this->dm->remove($user);
         $this->dm->flush();
 
-        //Don't find entity with deletedAt date in past
+        // Don't find entity with deletedAt date in past
         $newUser = new User();
         $username = 'test_user';
         $newUser->setUsername($username);
@@ -159,34 +147,27 @@ final class SoftDeleteableDocumentTest extends BaseTestCaseMongoODM
         $user = $repo->findOneBy(['username' => $username]);
 
         static::assertNull($user);
-        $this->dm->remove($user);
         $this->dm->flush();
     }
 
     public function testPostSoftDeleteEventIsDispatched(): void
     {
-        $subscriber = $this->getMockBuilder(EventSubscriber::class)
-            ->setMethods([
-                'getSubscribedEvents',
-                'preSoftDelete',
-                'postSoftDelete',
-            ])
-            ->getMock();
+        $this->dm->getEventManager()->addEventSubscriber(new WithPreAndPostSoftDeleteEventArgsTypeListener());
 
-        $subscriber->expects(static::once())
-            ->method('getSubscribedEvents')
-            ->willReturn([SoftDeleteableListener::PRE_SOFT_DELETE, SoftDeleteableListener::POST_SOFT_DELETE]);
+        $this->doTestPostSoftDeleteEventIsDispatched();
+    }
 
-        $subscriber->expects(static::once())
-            ->method('preSoftDelete')
-            ->with(static::anything());
+    /** @group legacy */
+    public function testPostSoftDeleteEventIsDispatchedWithDeprecatedListeners(): void
+    {
+        $this->dm->getEventManager()->addEventSubscriber(new WithoutTypeListener());
+        $this->dm->getEventManager()->addEventSubscriber(new WithLifecycleEventArgsFromODMTypeListener());
 
-        $subscriber->expects(static::once())
-            ->method('postSoftDelete')
-            ->with(static::anything());
+        $this->doTestPostSoftDeleteEventIsDispatched();
+    }
 
-        $this->dm->getEventManager()->addEventSubscriber($subscriber);
-
+    private function doTestPostSoftDeleteEventIsDispatched(): void
+    {
         $repo = $this->dm->getRepository(self::USER_CLASS);
 
         $newUser = new User();

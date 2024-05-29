@@ -28,8 +28,11 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class AttributeChangeTest extends BaseTestCaseORM
 {
-    public const FIXTURE = TitledArticle::class;
+    private const FIXTURE = TitledArticle::class;
 
+    /**
+     * @var TimestampableListenerStub
+     */
     protected $listener;
 
     protected function setUp(): void
@@ -52,7 +55,7 @@ final class AttributeChangeTest extends BaseTestCaseORM
         $test->setText('Test');
         $test->setState('Open');
 
-        $currentDate = new \DateTime('now');
+        $currentDate = new \DateTime();
         $this->listener->eventAdapter->setDateValue($currentDate);
 
         $this->em->persist($test);

@@ -25,6 +25,7 @@ class CompanyEmbedLink
      * @var string
      *
      * @ORM\Column(name="website", type="string", length=191, nullable=true)
+     *
      * @Gedmo\Translatable
      */
     #[Gedmo\Translatable]
@@ -35,46 +36,31 @@ class CompanyEmbedLink
      * @var string
      *
      * @ORM\Column(name="facebook", type="string", length=191, nullable=true)
+     *
      * @Gedmo\Translatable
      */
     #[Gedmo\Translatable]
     #[ORM\Column(name: 'facebook', type: Types::STRING, length: 191, nullable: true)]
     protected $facebook;
 
-    /**
-     * @return string
-     */
-    public function getWebsite()
+    public function getWebsite(): string
     {
         return $this->website;
     }
 
-    /**
-     * @param string $website
-     *
-     * @return CompanyEmbedLink
-     */
-    public function setWebsite($website)
+    public function setWebsite(string $website): self
     {
         $this->website = $website;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getFacebook()
+    public function getFacebook(): string
     {
         return $this->facebook;
     }
 
-    /**
-     * @param string $facebook
-     *
-     * @return CompanyEmbedLink
-     */
-    public function setFacebook($facebook)
+    public function setFacebook(string $facebook): self
     {
         $this->facebook = $facebook;
 

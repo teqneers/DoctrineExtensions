@@ -20,6 +20,8 @@ use Gedmo\Mapping\Driver\AbstractAnnotationDriver;
  * extension.
  *
  * @author Pierre-Charles Bertineau <pc.bertineau@alterphp.com>
+ *
+ * @internal
  */
 class Annotation extends AbstractAnnotationDriver
 {
@@ -31,23 +33,20 @@ class Annotation extends AbstractAnnotationDriver
     /**
      * List of types which are valid for IP
      *
-     * @var array
+     * @var string[]
      */
     protected $validTypes = [
         'string',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $class = $this->getMetaReflectionClass($meta);
         // property annotations
         foreach ($class->getProperties() as $property) {
-            if ($meta->isMappedSuperclass && !$property->isPrivate() ||
-                $meta->isInheritedField($property->name) ||
-                isset($meta->associationMappings[$property->name]['inherited'])
+            if ($meta->isMappedSuperclass && !$property->isPrivate()
+                || $meta->isInheritedField($property->name)
+                || isset($meta->associationMappings[$property->name]['inherited'])
             ) {
                 continue;
             }
@@ -57,7 +56,7 @@ class Annotation extends AbstractAnnotationDriver
                 if (!$meta->hasField($field)) {
                     throw new InvalidMappingException("Unable to find ipTraceable [{$field}] as mapped property in entity - {$meta->getName()}");
                 }
-                if ($meta->hasField($field) && !$this->isValidField($meta, $field)) {
+                if (!$this->isValidField($meta, $field)) {
                     throw new InvalidMappingException("Field - [{$field}] type is not valid and must be 'string' - {$meta->getName()}");
                 }
                 if (!in_array($ipTraceable->on, ['update', 'create', 'change'], true)) {
@@ -80,5 +79,7 @@ class Annotation extends AbstractAnnotationDriver
                 $config[$ipTraceable->on][] = $field;
             }
         }
+
+        return $config;
     }
 }

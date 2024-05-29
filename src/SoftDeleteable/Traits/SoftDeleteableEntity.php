@@ -14,8 +14,9 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * A soft deletable trait you can apply to your Doctrine ORM entities.
- * Includes default annotation mapping.
+ * Trait for soft-deletable objects.
+ *
+ * This implementation provides a mapping configuration for the Doctrine ORM.
  *
  * @author Wesley van Opdorp <wesley.van.opdorp@freshheads.com>
  */
@@ -24,7 +25,7 @@ trait SoftDeleteableEntity
     /**
      * @ORM\Column(type="datetime", nullable=true)
      *
-     * @var DateTime|null
+     * @var \DateTime|null
      */
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     protected $deletedAt;
@@ -34,7 +35,7 @@ trait SoftDeleteableEntity
      *
      * @return self
      */
-    public function setDeletedAt(DateTime $deletedAt = null)
+    public function setDeletedAt(?\DateTime $deletedAt = null)
     {
         $this->deletedAt = $deletedAt;
 
@@ -45,7 +46,7 @@ trait SoftDeleteableEntity
      * Get the deleted at timestamp value. Will return null if
      * the entity has not been soft deleted.
      *
-     * @return DateTime|null
+     * @return \DateTime|null
      */
     public function getDeletedAt()
     {

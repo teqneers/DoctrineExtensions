@@ -12,9 +12,11 @@ declare(strict_types=1);
 namespace Gedmo\Tests\IpTraceable;
 
 use Doctrine\Common\EventManager;
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Gedmo\Exception\InvalidArgumentException;
 use Gedmo\IpTraceable\IpTraceable;
 use Gedmo\IpTraceable\IpTraceableListener;
+use Gedmo\Mapping\Event\AdapterInterface;
 use Gedmo\Tests\IpTraceable\Fixture\Article;
 use Gedmo\Tests\IpTraceable\Fixture\Comment;
 use Gedmo\Tests\IpTraceable\Fixture\Type;
@@ -27,11 +29,11 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class IpTraceableTest extends BaseTestCaseORM
 {
-    public const TEST_IP = '34.234.1.10';
+    private const TEST_IP = '34.234.1.10';
 
-    public const ARTICLE = Article::class;
-    public const COMMENT = Comment::class;
-    public const TYPE = Type::class;
+    private const ARTICLE = Article::class;
+    private const COMMENT = Comment::class;
+    private const TYPE = Type::class;
 
     protected function setUp(): void
     {
@@ -59,14 +61,22 @@ final class IpTraceableTest extends BaseTestCaseORM
     {
         $listener = new IpTraceableListener();
         $listener->setIpValue('123.218.45.39');
-        static::assertSame('123.218.45.39', $listener->getFieldValue(null, null, null));
+        static::assertSame('123.218.45.39', $listener->getFieldValue(
+            $this->createStub(ClassMetadata::class),
+            'ip',
+            $this->createStub(AdapterInterface::class)
+        ));
     }
 
     public function testIpV6(): void
     {
         $listener = new IpTraceableListener();
         $listener->setIpValue('2001:0db8:0000:85a3:0000:0000:ac1f:8001');
-        static::assertSame('2001:0db8:0000:85a3:0000:0000:ac1f:8001', $listener->getFieldValue(null, null, null));
+        static::assertSame('2001:0db8:0000:85a3:0000:0000:ac1f:8001', $listener->getFieldValue(
+            $this->createStub(ClassMetadata::class),
+            'ip',
+            $this->createStub(AdapterInterface::class)
+        ));
     }
 
     public function testIpTraceable(): void

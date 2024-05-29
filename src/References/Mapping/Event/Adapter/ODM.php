@@ -11,7 +11,7 @@ namespace Gedmo\References\Mapping\Event\Adapter;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Proxy\Proxy as ORMProxy;
+use Doctrine\Persistence\Proxy as PersistenceProxy;
 use Gedmo\Mapping\Event\Adapter\ODM as BaseAdapterODM;
 use Gedmo\References\Mapping\Event\ReferencesAdapter;
 use ProxyManager\Proxy\GhostObjectInterface;
@@ -25,9 +25,6 @@ use ProxyManager\Proxy\GhostObjectInterface;
  */
 final class ODM extends BaseAdapterODM implements ReferencesAdapter
 {
-    /**
-     * {@inheritdoc}
-     */
     public function getIdentifier($om, $object, $single = true)
     {
         if ($om instanceof DocumentManager) {
@@ -35,7 +32,7 @@ final class ODM extends BaseAdapterODM implements ReferencesAdapter
         }
 
         if ($om instanceof EntityManagerInterface) {
-            if ($object instanceof ORMProxy) {
+            if ($object instanceof PersistenceProxy) {
                 $id = $om->getUnitOfWork()->getEntityIdentifier($object);
             } else {
                 $meta = $om->getClassMetadata(get_class($object));
@@ -59,12 +56,8 @@ final class ODM extends BaseAdapterODM implements ReferencesAdapter
         return null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getSingleReference($om, $class, $identifier)
     {
-        $this->throwIfNotEntityManager($om);
         $meta = $om->getClassMetadata($class);
 
         if (!$meta->isInheritanceTypeNone()) {
@@ -74,9 +67,6 @@ final class ODM extends BaseAdapterODM implements ReferencesAdapter
         return $om->getReference($class, $identifier);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function extractIdentifier($om, $object, $single = true)
     {
         $meta = $om->getClassMetadata(get_class($object));
@@ -91,12 +81,5 @@ final class ODM extends BaseAdapterODM implements ReferencesAdapter
         }
 
         return [$meta->getIdentifier()[0] => $id];
-    }
-
-    /**
-     * Override so we don't get an exception. We want to allow this.
-     */
-    private function throwIfNotEntityManager(EntityManagerInterface $em): void
-    {
     }
 }

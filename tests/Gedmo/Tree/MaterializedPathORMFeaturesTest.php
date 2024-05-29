@@ -24,9 +24,16 @@ use Gedmo\Tree\TreeListener;
  */
 final class MaterializedPathORMFeaturesTest extends BaseTestCaseORM
 {
-    public const CATEGORY = MPFeaturesCategory::class;
+    private const CATEGORY = MPFeaturesCategory::class;
 
+    /**
+     * @var array<string, mixed>
+     */
     protected $config;
+
+    /**
+     * @var TreeListener
+     */
     protected $listener;
 
     protected function setUp(): void
@@ -38,16 +45,13 @@ final class MaterializedPathORMFeaturesTest extends BaseTestCaseORM
         $evm = new EventManager();
         $evm->addEventSubscriber($this->listener);
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
 
         $meta = $this->em->getClassMetadata(self::CATEGORY);
         $this->config = $this->listener->getConfiguration($this->em, $meta->getName());
     }
 
-    /**
-     * @test
-     */
-    public function checkPathsAndHash()
+    public function testCheckPathsAndHash(): void
     {
         $category = $this->createCategory();
         $category->setTitle('1');
@@ -88,14 +92,24 @@ final class MaterializedPathORMFeaturesTest extends BaseTestCaseORM
         static::assertSame($category4->getTitle(), $category4->getTreeRootValue());
     }
 
-    public function createCategory()
+    protected function getUsedEntityFixtures(): array
+    {
+        return [
+            self::CATEGORY,
+        ];
+    }
+
+    private function createCategory(): MPFeaturesCategory
     {
         $class = self::CATEGORY;
 
         return new $class();
     }
 
-    public function generatePath(array $sources)
+    /**
+     * @param array<int|string, int|string|null> $sources
+     */
+    private function generatePath(array $sources): string
     {
         $path = '';
         foreach ($sources as $p => $id) {
@@ -105,15 +119,11 @@ final class MaterializedPathORMFeaturesTest extends BaseTestCaseORM
         return $path;
     }
 
-    public function generatePathHash(array $sources)
+    /**
+     * @param array<int|string, int|string|null> $sources
+     */
+    private function generatePathHash(array $sources): string
     {
         return md5($this->generatePath($sources));
-    }
-
-    protected function getUsedEntityFixtures()
-    {
-        return [
-            self::CATEGORY,
-        ];
     }
 }

@@ -21,6 +21,8 @@ use Gedmo\Mapping\Driver\AbstractAnnotationDriver;
  * extension.
  *
  * @author Lukas Botsch <lukas.botsch@gmail.com>
+ *
+ * @internal
  */
 class Annotation extends AbstractAnnotationDriver
 {
@@ -37,7 +39,7 @@ class Annotation extends AbstractAnnotationDriver
     /**
      * List of types which are valid for position fields
      *
-     * @var array
+     * @var string[]
      */
     protected $validTypes = [
         'int',
@@ -46,18 +48,15 @@ class Annotation extends AbstractAnnotationDriver
         'bigint',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $class = $this->getMetaReflectionClass($meta);
 
         // property annotations
         foreach ($class->getProperties() as $property) {
-            if ($meta->isMappedSuperclass && !$property->isPrivate() ||
-                $meta->isInheritedField($property->name) ||
-                isset($meta->associationMappings[$property->name]['inherited'])
+            if ($meta->isMappedSuperclass && !$property->isPrivate()
+                || $meta->isInheritedField($property->name)
+                || isset($meta->associationMappings[$property->name]['inherited'])
             ) {
                 continue;
             }
@@ -92,5 +91,7 @@ class Annotation extends AbstractAnnotationDriver
                 throw new InvalidMappingException("Missing property: 'position' in class - {$meta->getName()}");
             }
         }
+
+        return $config;
     }
 }

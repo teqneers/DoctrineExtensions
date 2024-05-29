@@ -11,11 +11,14 @@ namespace Gedmo\Sluggable\Mapping\Event;
 
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Gedmo\Mapping\Event\AdapterInterface;
+use Gedmo\Sluggable\SluggableListener;
 
 /**
  * Doctrine event adapter for the Sluggable extension.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @phpstan-import-type SluggableConfiguration from SluggableListener
  */
 interface SluggableAdapter extends AdapterInterface
 {
@@ -26,7 +29,9 @@ interface SluggableAdapter extends AdapterInterface
      * @param ClassMetadata $meta
      * @param string        $slug
      *
-     * @return array
+     * @phpstan-param SluggableConfiguration $config
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getSimilarSlugs($object, $meta, array $config, $slug);
 
@@ -36,6 +41,8 @@ interface SluggableAdapter extends AdapterInterface
      * @param object $object
      * @param string $target
      * @param string $replacement
+     *
+     * @phpstan-param SluggableConfiguration $config
      *
      * @return int the number of updated records
      */
@@ -48,6 +55,8 @@ interface SluggableAdapter extends AdapterInterface
      * @param object $object
      * @param string $target
      * @param string $replacement
+     *
+     * @phpstan-param SluggableConfiguration $config
      *
      * @return int the number of updated records
      */

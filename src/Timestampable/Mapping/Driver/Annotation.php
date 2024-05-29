@@ -20,6 +20,8 @@ use Gedmo\Mapping\Driver\AbstractAnnotationDriver;
  * extension.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @internal
  */
 class Annotation extends AbstractAnnotationDriver
 {
@@ -31,7 +33,7 @@ class Annotation extends AbstractAnnotationDriver
     /**
      * List of types which are valid for timestamp
      *
-     * @var array
+     * @var string[]
      */
     protected $validTypes = [
         'date',
@@ -47,17 +49,14 @@ class Annotation extends AbstractAnnotationDriver
         'integer',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $class = $this->getMetaReflectionClass($meta);
         // property annotations
         foreach ($class->getProperties() as $property) {
-            if ($meta->isMappedSuperclass && !$property->isPrivate() ||
-                $meta->isInheritedField($property->name) ||
-                isset($meta->associationMappings[$property->name]['inherited'])
+            if ($meta->isMappedSuperclass && !$property->isPrivate()
+                || $meta->isInheritedField($property->name)
+                || isset($meta->associationMappings[$property->name]['inherited'])
             ) {
                 continue;
             }
@@ -89,5 +88,7 @@ class Annotation extends AbstractAnnotationDriver
                 $config[$timestampable->on][] = $field;
             }
         }
+
+        return $config;
     }
 }

@@ -24,27 +24,26 @@ use Gedmo\Translatable\Entity\Translation;
  */
 final class MultiInheritanceTest extends BaseTestCaseORM
 {
-    public const NODE = Node::class;
-    public const BASE_NODE = BaseNode::class;
-    public const ANODE = ANode::class;
-    public const TRANSLATION = Translation::class;
+    private const NODE = Node::class;
+    private const BASE_NODE = BaseNode::class;
+    private const ANODE = ANode::class;
+    private const TRANSLATION = Translation::class;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->getMockSqliteEntityManager();
+        $this->getDefaultMockSqliteEntityManager();
         $this->populate();
     }
 
-    public function testInheritance()
+    public function testInheritance(): void
     {
         $meta = $this->em->getClassMetadata(self::NODE);
         $repo = $this->em->getRepository(self::NODE);
 
         $food = $repo->findOneBy(['identifier' => 'food']);
         $left = $meta->getReflectionProperty('lft')->getValue($food);
-        $right = $meta->getReflectionProperty('rgt')->getValue($food);
 
         static::assertSame(1, $left);
         static::assertNotNull($food->getCreated());
@@ -62,12 +61,12 @@ final class MultiInheritanceTest extends BaseTestCaseORM
      * Child count is invalid resulting in SINGLE_TABLE and JOINED
      * inheritance mapping. Also getChildren, getPath results are invalid
      */
-    public function testCaseGithubIssue7()
+    public function testCaseGithubIssue7(): void
     {
         $repo = $this->em->getRepository(self::NODE);
         $vegies = $repo->findOneBy(['title' => 'Vegitables']);
 
-        $count = $repo->childCount($vegies, true/*direct*/);
+        $count = $repo->childCount($vegies, true/* direct */);
         static::assertSame(3, $count);
 
         $children = $repo->children($vegies, true);
@@ -80,7 +79,7 @@ final class MultiInheritanceTest extends BaseTestCaseORM
         static::assertCount(3, $path);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::NODE,
@@ -92,35 +91,35 @@ final class MultiInheritanceTest extends BaseTestCaseORM
 
     private function populate(): void
     {
-        $root = new \Gedmo\Tests\Tree\Fixture\Node();
+        $root = new Node();
         $root->setTitle('Food');
         $root->setIdentifier('food');
 
-        $root2 = new \Gedmo\Tests\Tree\Fixture\Node();
+        $root2 = new Node();
         $root2->setTitle('Sports');
         $root2->setIdentifier('sport');
 
-        $child = new \Gedmo\Tests\Tree\Fixture\Node();
+        $child = new Node();
         $child->setTitle('Fruits');
         $child->setParent($root);
         $child->setIdentifier('fruit');
 
-        $child2 = new \Gedmo\Tests\Tree\Fixture\Node();
+        $child2 = new Node();
         $child2->setTitle('Vegitables');
         $child2->setParent($root);
         $child2->setIdentifier('vegie');
 
-        $childsChild = new \Gedmo\Tests\Tree\Fixture\Node();
+        $childsChild = new Node();
         $childsChild->setTitle('Carrots');
         $childsChild->setParent($child2);
         $childsChild->setIdentifier('carrot');
 
-        $potatoes = new \Gedmo\Tests\Tree\Fixture\Node();
+        $potatoes = new Node();
         $potatoes->setTitle('Potatoes');
         $potatoes->setParent($child2);
         $potatoes->setIdentifier('potatoe');
 
-        $cabbages = new \Gedmo\Tests\Tree\Fixture\BaseNode();
+        $cabbages = new BaseNode();
         $cabbages->setIdentifier('cabbage');
         $cabbages->setParent($child2);
 

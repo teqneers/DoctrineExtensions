@@ -25,11 +25,11 @@ use Gedmo\Tests\Tool\BaseTestCaseMongoODM;
  */
 final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
 {
-    public const POST = Post::class;
-    public const CATEGORY = Category::class;
-    public const KID = Kid::class;
-    public const KID_DATE1 = '1999-12-31';
-    public const KID_DATE2 = '2000-01-01';
+    private const POST = Post::class;
+    private const CATEGORY = Category::class;
+    private const KID = Kid::class;
+    private const KID_DATE1 = '1999-12-31';
+    private const KID_DATE2 = '2000-01-01';
 
     protected function setUp(): void
     {
@@ -44,7 +44,7 @@ final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
     /**
      * There should be 2 kids by position
      */
-    public function testKidInitialPositions()
+    public function testKidInitialPositions(): void
     {
         $repo = $this->dm->getRepository(self::KID);
 
@@ -57,7 +57,7 @@ final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
     /**
      * Move the last kid in the first position
      */
-    public function testKidMovePosition()
+    public function testKidMovePosition(): void
     {
         $repo = $this->dm->getRepository(self::KID);
 
@@ -79,7 +79,7 @@ final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
     /**
      * There should be 2 posts by position
      */
-    public function testPostsInitialPositions()
+    public function testPostsInitialPositions(): void
     {
         $repo = $this->dm->getRepository(self::POST);
 
@@ -92,7 +92,7 @@ final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
     /**
      * Move the last inserted post in first position and check
      */
-    public function testPostsMovePosition()
+    public function testPostsMovePosition(): void
     {
         $repo_category = $this->dm->getRepository(self::CATEGORY);
         $repo_post = $this->dm->getRepository(self::POST);
@@ -124,7 +124,7 @@ final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
     /**
      * Delete the 2nd post linked to a Category and check
      */
-    public function testPostsDeletePosition()
+    public function testPostsDeletePosition(): void
     {
         $repo_category = $this->dm->getRepository(self::CATEGORY);
         $repo_post = $this->dm->getRepository(self::POST);
@@ -168,7 +168,7 @@ final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
         for ($i = 0; $i < 6; ++$i) {
             $post = new Post();
             $post->setTitle('post'.$i);
-            $post->setCategory($categories[($i % 2)]);
+            $post->setCategory($categories[$i % 2]);
             $this->dm->persist($post);
         }
 
@@ -179,8 +179,8 @@ final class SortableDocumentGroupTest extends BaseTestCaseMongoODM
 
         for ($i = 0; $i < 4; ++$i) {
             $kid = new Kid();
-            $kid->setLastName('kid'.$i);
-            $kid->setBirthdate($birthdates[($i % 2)]);
+            $kid->setLastname('kid'.$i);
+            $kid->setBirthdate($birthdates[$i % 2]);
             $this->dm->persist($kid);
         }
         $this->dm->flush();

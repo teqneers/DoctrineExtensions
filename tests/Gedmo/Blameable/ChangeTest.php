@@ -23,12 +23,9 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class ChangeTest extends BaseTestCaseORM
 {
-    public const FIXTURE = TitledArticle::class;
+    private const FIXTURE = TitledArticle::class;
 
-    /**
-     * @var BlameableListener
-     */
-    private $listener;
+    private BlameableListener $listener;
 
     protected function setUp(): void
     {
@@ -57,7 +54,7 @@ final class ChangeTest extends BaseTestCaseORM
         $this->em->persist($test);
         $this->em->flush();
         $this->em->clear();
-        //Changed
+        // Changed
         static::assertSame('testuser', $test->getChtitle());
 
         $this->listener->setUserValue('otheruser');
@@ -67,7 +64,7 @@ final class ChangeTest extends BaseTestCaseORM
         $this->em->persist($test);
         $this->em->flush();
         $this->em->clear();
-        //Not Changed
+        // Not Changed
         static::assertSame('testuser', $test->getChtitle());
     }
 

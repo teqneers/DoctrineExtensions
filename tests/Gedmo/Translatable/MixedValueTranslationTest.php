@@ -26,10 +26,10 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class MixedValueTranslationTest extends BaseTestCaseORM
 {
-    public const MIXED = MixedValue::class;
-    public const TRANSLATION = Translation::class;
+    private const MIXED = MixedValue::class;
+    private const TRANSLATION = Translation::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -49,7 +49,7 @@ final class MixedValueTranslationTest extends BaseTestCaseORM
         $this->populate();
     }
 
-    public function testFixtureGeneratedTranslations()
+    public function testFixtureGeneratedTranslations(): void
     {
         $repo = $this->em->getRepository(self::MIXED);
         $mixed = $repo->findOneBy(['id' => 1]);
@@ -59,7 +59,7 @@ final class MixedValueTranslationTest extends BaseTestCaseORM
         static::assertSame('en', $mixed->getCust()->test);
     }
 
-    public function testOtherTranslation()
+    public function testOtherTranslation(): void
     {
         $repo = $this->em->getRepository(self::MIXED);
         $mixed = $repo->findOneBy(['id' => 1]);
@@ -86,7 +86,7 @@ final class MixedValueTranslationTest extends BaseTestCaseORM
         static::assertSame('de', $cust->test);
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::MIXED,

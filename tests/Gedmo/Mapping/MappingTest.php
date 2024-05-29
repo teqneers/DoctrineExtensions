@@ -11,44 +11,61 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Mapping;
 
+use Doctrine\Common\EventManager;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
+use Doctrine\ORM\Tools\SchemaTool;
+use Gedmo\Sluggable\SluggableListener;
 use Gedmo\Tests\Tree\Fixture\BehavioralCategory;
+use Gedmo\Timestampable\TimestampableListener;
 use Gedmo\Translatable\Entity\Translation;
+use Gedmo\Translatable\TranslatableListener;
+use Gedmo\Tree\TreeListener;
+use PHPUnit\Framework\TestCase;
 
 /**
  * These are mapping extension tests
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
-final class MappingTest extends \PHPUnit\Framework\TestCase
+final class MappingTest extends TestCase
 {
-    public const TEST_ENTITY_CATEGORY = BehavioralCategory::class;
-    public const TEST_ENTITY_TRANSLATION = Translation::class;
+    private const TEST_ENTITY_CATEGORY = BehavioralCategory::class;
+    private const TEST_ENTITY_TRANSLATION = Translation::class;
 
-    private $em;
-    private $timestampable;
+    private EntityManager $em;
+
+    private TimestampableListener $timestampable;
 
     protected function setUp(): void
     {
-        $config = new \Doctrine\ORM\Configuration();
+        $config = new Configuration();
         $config->setProxyDir(TESTS_TEMP_DIR);
         $config->setProxyNamespace('Gedmo\Mapping\Proxy');
-        //$this->markTestSkipped('Skipping according to a bug in annotation reader creation.');
-        $config->setMetadataDriverImpl(new \Doctrine\ORM\Mapping\Driver\AnnotationDriver($_ENV['annotation_reader']));
+
+        if (PHP_VERSION_ID >= 80000) {
+            $config->setMetadataDriverImpl(new AttributeDriver([]));
+        } else {
+            $config->setMetadataDriverImpl(new AnnotationDriver($_ENV['annotation_reader']));
+        }
 
         $conn = [
             'driver' => 'pdo_sqlite',
             'memory' => true,
         ];
 
-        $evm = new \Doctrine\Common\EventManager();
-        $evm->addEventSubscriber(new \Gedmo\Translatable\TranslatableListener());
-        $this->timestampable = new \Gedmo\Timestampable\TimestampableListener();
+        $evm = new EventManager();
+        $evm->addEventSubscriber(new TranslatableListener());
+        $this->timestampable = new TimestampableListener();
         $evm->addEventSubscriber($this->timestampable);
-        $evm->addEventSubscriber(new \Gedmo\Sluggable\SluggableListener());
-        $evm->addEventSubscriber(new \Gedmo\Tree\TreeListener());
-        $this->em = \Doctrine\ORM\EntityManager::create($conn, $config, $evm);
+        $evm->addEventSubscriber(new SluggableListener());
+        $evm->addEventSubscriber(new TreeListener());
+        $this->em = new EntityManager(DriverManager::getConnection($conn, $config), $config, $evm);
 
-        $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($this->em);
+        $schemaTool = new SchemaTool($this->em);
         $schemaTool->dropSchema([]);
         $schemaTool->createSchema([
             $this->em->getClassMetadata(self::TEST_ENTITY_CATEGORY),
@@ -56,7 +73,7 @@ final class MappingTest extends \PHPUnit\Framework\TestCase
         ]);
     }
 
-    public function testNoCacheImplementationMapping()
+    public function testNoCacheImplementationMapping(): void
     {
         $food = new BehavioralCategory();
         $food->setTitle('Food');

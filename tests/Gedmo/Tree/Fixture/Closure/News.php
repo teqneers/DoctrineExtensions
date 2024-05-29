@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Gedmo\Tests\Tree\Fixture\Closure;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -18,27 +19,36 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @author Anatoly Marinescu <tolean@zingan.com>
  */
+#[ORM\Entity]
 class News
 {
     /**
+     * @var int|null
+     *
      * @ORM\Id
-     * @ORM\Column(name="id", type="integer")
      * @ORM\GeneratedValue(strategy="IDENTITY")
+     * @ORM\Column(type="integer")
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[ORM\Column(type: Types::INTEGER)]
     private $id;
 
     /**
      * @ORM\Column(name="title", type="string", length=64)
      */
-    private $title;
+    #[ORM\Column(name: 'title', type: Types::STRING, length: 64)]
+    private string $title;
 
     /**
      * @ORM\OneToOne(targetEntity="Gedmo\Tests\Tree\Fixture\Closure\Category", cascade={"persist"})
      * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
      */
-    private $category;
+    #[ORM\OneToOne(targetEntity: Category::class, cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'category_id', referencedColumnName: 'id')]
+    private Category $category;
 
-    public function __construct($title, Category $category)
+    public function __construct(string $title, Category $category)
     {
         $this->title = $title;
         $this->category = $category;

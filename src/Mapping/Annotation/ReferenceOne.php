@@ -14,8 +14,14 @@ namespace Gedmo\Mapping\Annotation;
  * to be user like "@ReferenceOne(type="entity", class="MyEntity", identifier="entity_id")"
  *
  * @author Bulat Shakirzyanov <mallluhuct@gmail.com>
+ *
  * @Annotation
+ *
+ * @NamedArgumentConstructor
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
+#[\Attribute(\Attribute::TARGET_PROPERTY)]
 class ReferenceOne extends Reference
 {
 }

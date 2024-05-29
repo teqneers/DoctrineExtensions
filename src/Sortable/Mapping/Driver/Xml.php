@@ -9,6 +9,7 @@
 
 namespace Gedmo\Sortable\Mapping\Driver;
 
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Gedmo\Exception\InvalidMappingException;
 use Gedmo\Mapping\Driver\Xml as BaseXml;
 
@@ -19,24 +20,23 @@ use Gedmo\Mapping\Driver\Xml as BaseXml;
  * extension.
  *
  * @author Lukas Botsch <lukas.botsch@gmail.com>
+ *
+ * @internal
  */
 class Xml extends BaseXml
 {
     /**
      * List of types which are valid for position field
      *
-     * @var array
+     * @var string[]
      */
-    private $validTypes = [
+    private const VALID_TYPES = [
         'int',
         'integer',
         'smallint',
         'bigint',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         /**
@@ -56,17 +56,17 @@ class Xml extends BaseXml
                     $config['position'] = $field;
                 }
             }
-            $this->readSortableGroups($xml->field, $config, 'name');
+            $config = $this->readSortableGroups($xml->field, $config, 'name');
         }
 
         // Search for sortable-groups in association mappings
         if (isset($xml->{'many-to-one'})) {
-            $this->readSortableGroups($xml->{'many-to-one'}, $config);
+            $config = $this->readSortableGroups($xml->{'many-to-one'}, $config);
         }
 
         // Search for sortable-groups in association mappings
         if (isset($xml->{'many-to-many'})) {
-            $this->readSortableGroups($xml->{'many-to-many'}, $config);
+            $config = $this->readSortableGroups($xml->{'many-to-many'}, $config);
         }
 
         if (!$meta->isMappedSuperclass && $config) {
@@ -74,13 +74,15 @@ class Xml extends BaseXml
                 throw new InvalidMappingException("Missing property: 'position' in class - {$meta->getName()}");
             }
         }
+
+        return $config;
     }
 
     /**
      * Checks if $field type is valid as Sortable Position field
      *
-     * @param object $meta
-     * @param string $field
+     * @param ClassMetadata $meta
+     * @param string        $field
      *
      * @return bool
      */
@@ -88,10 +90,15 @@ class Xml extends BaseXml
     {
         $mapping = $meta->getFieldMapping($field);
 
-        return $mapping && in_array($mapping['type'], $this->validTypes, true);
+        return $mapping && in_array($mapping['type'], self::VALID_TYPES, true);
     }
 
-    private function readSortableGroups(\SimpleXMLElement $mapping, array &$config, string $fieldAttr = 'field'): void
+    /**
+     * @param array<string, mixed> $config
+     *
+     * @return array<string, mixed>
+     */
+    private function readSortableGroups(\SimpleXMLElement $mapping, array $config, string $fieldAttr = 'field'): array
     {
         foreach ($mapping as $mappingDoctrine) {
             $map = $mappingDoctrine->children(self::GEDMO_NAMESPACE_URI);
@@ -104,5 +111,7 @@ class Xml extends BaseXml
                 $config['groups'][] = $field;
             }
         }
+
+        return $config;
     }
 }

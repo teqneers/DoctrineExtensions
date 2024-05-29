@@ -29,20 +29,14 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class TranslatableSlugTest extends BaseTestCaseORM
 {
-    public const ARTICLE = TranslatableArticle::class;
-    public const COMMENT = Comment::class;
-    public const PAGE = Page::class;
-    public const TRANSLATION = Translation::class;
+    private const ARTICLE = TranslatableArticle::class;
+    private const COMMENT = Comment::class;
+    private const PAGE = Page::class;
+    private const TRANSLATION = Translation::class;
 
-    /**
-     * @var int|null
-     */
-    private $articleId;
+    private ?int $articleId = null;
 
-    /**
-     * @var TranslatableListener
-     */
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -54,7 +48,7 @@ final class TranslatableSlugTest extends BaseTestCaseORM
         $evm->addEventSubscriber(new SluggableListener());
         $evm->addEventSubscriber($this->translatableListener);
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
         $this->populate();
     }
 

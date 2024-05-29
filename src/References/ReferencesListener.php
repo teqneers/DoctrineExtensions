@@ -11,6 +11,9 @@ namespace Gedmo\References;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\EventArgs;
+use Doctrine\Persistence\Event\LifecycleEventArgs;
+use Doctrine\Persistence\Event\LoadClassMetadataEventArgs;
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
 use Gedmo\Mapping\MappedEventSubscriber;
 
@@ -20,11 +23,36 @@ use Gedmo\Mapping\MappedEventSubscriber;
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  * @author Bulat Shakirzyanov <mallluhuct@gmail.com>
  * @author Jonathan H. Wage <jonwage@gmail.com>
+ *
+ * @phpstan-type ReferenceConfiguration = array{
+ *   field?: string,
+ *   type?: string,
+ *   class?: class-string,
+ *   identifier?: string,
+ *   mappedBy?: string,
+ *   inversedBy?: string,
+ * }
+ * @phpstan-type ReferencesConfiguration = array{
+ *   referenceMany?: array<string, ReferenceConfiguration>,
+ *   referenceManyEmbed?: array<string, ReferenceConfiguration>,
+ *   referenceOne?: array<string, ReferenceConfiguration>,
+ *   useObjectClass?: class-string,
+ * }
+ *
+ * @phpstan-method ReferencesConfiguration getConfiguration(ObjectManager $objectManager, $class)
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class ReferencesListener extends MappedEventSubscriber
 {
-    private $managers;
+    /**
+     * @var array<string, ObjectManager>
+     */
+    private array $managers;
 
+    /**
+     * @param array<string, ObjectManager> $managers
+     */
     public function __construct(array $managers = [])
     {
         parent::__construct();
@@ -32,14 +60,27 @@ class ReferencesListener extends MappedEventSubscriber
         $this->managers = $managers;
     }
 
+    /**
+     * @param LoadClassMetadataEventArgs $eventArgs
+     *
+     * @phpstan-param LoadClassMetadataEventArgs<ClassMetadata<object>, ObjectManager> $eventArgs
+     *
+     * @return void
+     */
     public function loadClassMetadata(EventArgs $eventArgs)
     {
-        $ea = $this->getEventAdapter($eventArgs);
         $this->loadMetadataForObjectClass(
-            $ea->getObjectManager(), $eventArgs->getClassMetadata()
+            $eventArgs->getObjectManager(), $eventArgs->getClassMetadata()
         );
     }
 
+    /**
+     * @param LifecycleEventArgs $eventArgs
+     *
+     * @phpstan-param LifecycleEventArgs<ObjectManager> $eventArgs
+     *
+     * @return void
+     */
     public function postLoad(EventArgs $eventArgs)
     {
         $ea = $this->getEventAdapter($eventArgs);
@@ -91,7 +132,7 @@ class ReferencesListener extends MappedEventSubscriber
                                             $identifier => $id,
                                         ]);
 
-                                    return new ArrayCollection((is_array($results) ? $results : $results->toArray()));
+                                    return new ArrayCollection(is_array($results) ? $results : $results->toArray());
                                 }
                             )
                         );
@@ -103,11 +144,25 @@ class ReferencesListener extends MappedEventSubscriber
         $this->updateManyEmbedReferences($eventArgs);
     }
 
+    /**
+     * @param LifecycleEventArgs $eventArgs
+     *
+     * @phpstan-param LifecycleEventArgs<ObjectManager> $eventArgs
+     *
+     * @return void
+     */
     public function prePersist(EventArgs $eventArgs)
     {
         $this->updateReferences($eventArgs);
     }
 
+    /**
+     * @param LifecycleEventArgs $eventArgs
+     *
+     * @phpstan-param LifecycleEventArgs<ObjectManager> $eventArgs
+     *
+     * @return void
+     */
     public function preUpdate(EventArgs $eventArgs)
     {
         $this->updateReferences($eventArgs);
@@ -126,6 +181,12 @@ class ReferencesListener extends MappedEventSubscriber
         ];
     }
 
+    /**
+     * @param string        $type
+     * @param ObjectManager $manager
+     *
+     * @return void
+     */
     public function registerManager($type, $manager)
     {
         $this->managers[$type] = $manager;
@@ -141,6 +202,13 @@ class ReferencesListener extends MappedEventSubscriber
         return $this->managers[$type];
     }
 
+    /**
+     * @param LifecycleEventArgs $eventArgs
+     *
+     * @phpstan-param LifecycleEventArgs<ObjectManager> $eventArgs
+     *
+     * @return void
+     */
     public function updateManyEmbedReferences(EventArgs $eventArgs)
     {
         $ea = $this->getEventAdapter($eventArgs);
@@ -173,7 +241,7 @@ class ReferencesListener extends MappedEventSubscriber
                                     $identifier => $id,
                                 ]);
 
-                            return new ArrayCollection((is_array($results) ? $results : $results->toArray()));
+                            return new ArrayCollection(is_array($results) ? $results : $results->toArray());
                         }
                     )
                 );
@@ -186,6 +254,11 @@ class ReferencesListener extends MappedEventSubscriber
         return __NAMESPACE__;
     }
 
+    /**
+     * @param LifecycleEventArgs $eventArgs
+     *
+     * @phpstan-param LifecycleEventArgs<ObjectManager> $eventArgs
+     */
     private function updateReferences(EventArgs $eventArgs): void
     {
         $ea = $this->getEventAdapter($eventArgs);

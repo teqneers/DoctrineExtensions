@@ -9,12 +9,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Translatable;
+namespace Gedmo\Tests\Translatable\Issue;
 
 use Doctrine\Common\EventManager;
 use Gedmo\Tests\Tool\BaseTestCaseMongoODM;
 use Gedmo\Tests\Translatable\Fixture\Issue165\SimpleArticle;
-use Gedmo\Translatable\Document\Translation;
 use Gedmo\Translatable\TranslatableListener;
 
 /**
@@ -24,11 +23,7 @@ use Gedmo\Translatable\TranslatableListener;
  */
 final class Issue165Test extends BaseTestCaseMongoODM
 {
-    public const ARTICLE = SimpleArticle::class;
-    public const TRANSLATION = Translation::class;
-
-    private $translatableListener;
-    private $articleId;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -42,10 +37,7 @@ final class Issue165Test extends BaseTestCaseMongoODM
         $this->getDefaultDocumentManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldPersistUntranslatedFields()
+    public function testShouldPersistUntranslatedFields(): void
     {
         $article = new SimpleArticle();
         $article->setTitle('en');

@@ -10,6 +10,7 @@
 namespace Gedmo\Sortable\Mapping\Event\Adapter;
 
 use Doctrine\Common\Util\ClassUtils;
+use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
 use Gedmo\Mapping\Event\Adapter\ODM as BaseAdapterODM;
 use Gedmo\Sortable\Mapping\Event\SortableAdapter;
 
@@ -21,6 +22,13 @@ use Gedmo\Sortable\Mapping\Event\SortableAdapter;
  */
 final class ODM extends BaseAdapterODM implements SortableAdapter
 {
+    /**
+     * @param array<string, mixed>    $config
+     * @param ClassMetadata           $meta
+     * @param iterable<string, mixed> $groups
+     *
+     * @return int
+     */
     public function getMaxPosition(array $config, $meta, $groups)
     {
         $dm = $this->getObjectManager();
@@ -43,6 +51,13 @@ final class ODM extends BaseAdapterODM implements SortableAdapter
         return -1;
     }
 
+    /**
+     * @param array<string, mixed> $relocation
+     * @param array<string, mixed> $delta
+     * @param array<string, mixed> $config
+     *
+     * @return void
+     */
     public function updatePositions($relocation, $delta, $config)
     {
         $dm = $this->getObjectManager();

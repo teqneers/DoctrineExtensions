@@ -9,9 +9,11 @@
 
 namespace Gedmo\Loggable\Mapping\Event\Adapter;
 
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Gedmo\Loggable\Entity\LogEntry;
 use Gedmo\Loggable\Mapping\Event\LoggableAdapter;
 use Gedmo\Mapping\Event\Adapter\ORM as BaseAdapterORM;
+use Gedmo\Tool\Wrapper\EntityWrapper;
 
 /**
  * Doctrine event adapter for ORM adapted
@@ -21,31 +23,25 @@ use Gedmo\Mapping\Event\Adapter\ORM as BaseAdapterORM;
  */
 final class ORM extends BaseAdapterORM implements LoggableAdapter
 {
-    /**
-     * {@inheritdoc}
-     */
     public function getDefaultLogEntryClass()
     {
         return LogEntry::class;
     }
 
     /**
-     * {@inheritdoc}
+     * @param ClassMetadata $meta
      */
     public function isPostInsertGenerator($meta)
     {
         return $meta->idGenerator->isPostInsertGenerator();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getNewVersion($meta, $object)
     {
         $em = $this->getObjectManager();
         $objectMeta = $em->getClassMetadata(get_class($object));
-        $identifierField = $this->getSingleIdentifierFieldName($objectMeta);
-        $objectId = (string) $objectMeta->getReflectionProperty($identifierField)->getValue($object);
+        $wrapper = new EntityWrapper($object, $em);
+        $objectId = $wrapper->getIdentifier(false, true);
 
         $dql = "SELECT MAX(log.version) FROM {$meta->getName()} log";
         $dql .= ' WHERE log.objectId = :objectId';

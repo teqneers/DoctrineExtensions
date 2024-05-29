@@ -34,28 +34,26 @@ class Article
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="code", type="string", length=16)
      */
     #[ORM\Column(name: 'code', type: Types::STRING, length: 16)]
-    private $code;
+    private ?string $code = null;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(name="title", length=64)
      */
     #[ORM\Column(name: 'title', length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(updatable=true, unique=true, unique_base="code", fields={"title"})
+     *
      * @ORM\Column(length=64, nullable=true)
      */
-    #[ORM\Column(name: 'title', nullable: true)]
+    #[Gedmo\Slug(updatable: true, unique: true, unique_base: 'code', fields: ['title'])]
+    #[ORM\Column(length: 64, nullable: true)]
     private $slug;
 
     public function getId(): ?int

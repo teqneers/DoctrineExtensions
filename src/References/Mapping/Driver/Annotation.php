@@ -9,10 +9,13 @@
 
 namespace Gedmo\References\Mapping\Driver;
 
+use Doctrine\Common\Annotations\Reader;
+use Doctrine\Persistence\Mapping\Driver\MappingDriver;
 use Gedmo\Mapping\Annotation\ReferenceMany;
 use Gedmo\Mapping\Annotation\ReferenceManyEmbed;
 use Gedmo\Mapping\Annotation\ReferenceOne;
 use Gedmo\Mapping\Driver\AnnotationDriverInterface;
+use Gedmo\Mapping\Driver\AttributeReader;
 
 /**
  * This is an annotation mapping driver for References
@@ -21,6 +24,8 @@ use Gedmo\Mapping\Driver\AnnotationDriverInterface;
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  * @author Bulat Shakirzyanov <mallluhuct@gmail.com>
  * @author Jonathan H. Wage <jonwage@gmail.com>
+ *
+ * @internal
  */
 class Annotation implements AnnotationDriverInterface
 {
@@ -40,43 +45,42 @@ class Annotation implements AnnotationDriverInterface
     public const REFERENCE_MANY_EMBED = ReferenceManyEmbed::class;
 
     /**
-     * original driver if it is available
+     * @var array<string, self::REFERENCE_ONE|self::REFERENCE_MANY|self::REFERENCE_MANY_EMBED>
      */
-    protected $_originalDriver;
-
-    private $annotations = [
+    private const ANNOTATIONS = [
         'referenceOne' => self::REFERENCE_ONE,
         'referenceMany' => self::REFERENCE_MANY,
         'referenceManyEmbed' => self::REFERENCE_MANY_EMBED,
     ];
 
     /**
+     * original driver if it is available
+     *
+     * @var MappingDriver
+     */
+    protected $_originalDriver;
+
+    /**
      * Annotation reader instance
      *
-     * @var object
+     * @var Reader|AttributeReader|object
      */
     private $reader;
 
-    /**
-     * {@inheritdoc}
-     */
     public function setAnnotationReader($reader)
     {
         $this->reader = $reader;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function readExtendedMetadata($meta, array &$config)
     {
         $class = $meta->getReflectionClass();
-        foreach ($this->annotations as $key => $annotation) {
+        foreach (self::ANNOTATIONS as $key => $annotation) {
             $config[$key] = [];
             foreach ($class->getProperties() as $property) {
-                if ($meta->isMappedSuperclass && !$property->isPrivate() ||
-                    $meta->isInheritedField($property->name) ||
-                    isset($meta->associationMappings[$property->name]['inherited'])
+                if ($meta->isMappedSuperclass && !$property->isPrivate()
+                    || $meta->isInheritedField($property->name)
+                    || isset($meta->associationMappings[$property->name]['inherited'])
                 ) {
                     continue;
                 }
@@ -93,6 +97,8 @@ class Annotation implements AnnotationDriverInterface
                 }
             }
         }
+
+        return $config;
     }
 
     /**

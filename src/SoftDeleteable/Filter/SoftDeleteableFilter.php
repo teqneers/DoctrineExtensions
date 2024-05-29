@@ -9,6 +9,7 @@
 
 namespace Gedmo\SoftDeleteable\Filter;
 
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\Filter\SQLFilter;
@@ -21,6 +22,8 @@ use Gedmo\SoftDeleteable\SoftDeleteableListener;
  * @author Gustavo Falco <comfortablynumb84@gmail.com>
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  * @author Patrik Votoček <patrik@votocek.cz>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class SoftDeleteableFilter extends SQLFilter
 {
@@ -36,6 +39,7 @@ class SoftDeleteableFilter extends SQLFilter
 
     /**
      * @var array<string, bool>
+     *
      * @phpstan-var array<class-string, bool>
      */
     protected $disabled = [];
@@ -43,9 +47,9 @@ class SoftDeleteableFilter extends SQLFilter
     /**
      * @param string $targetTableAlias
      *
-     * @return string
+     * @throws Exception
      *
-     * @throws \Doctrine\DBAL\Exception
+     * @return string
      */
     public function addFilterConstraint(ClassMetadata $targetEntity, $targetTableAlias)
     {
@@ -68,7 +72,7 @@ class SoftDeleteableFilter extends SQLFilter
 
         $column = $quoteStrategy->getColumnName($config['fieldName'], $targetEntity, $platform);
 
-        $addCondSql = $platform->getIsNullExpression($targetTableAlias.'.'.$column);
+        $addCondSql = $targetTableAlias.'.'.$column.' IS NULL';
         if (isset($config['timeAware']) && $config['timeAware']) {
             $addCondSql = "({$addCondSql} OR {$targetTableAlias}.{$column} > {$platform->getCurrentTimestampSQL()})";
         }
@@ -80,6 +84,8 @@ class SoftDeleteableFilter extends SQLFilter
      * @param string $class
      *
      * @phpstan-param class-string $class
+     *
+     * @return void
      */
     public function disableForEntity($class)
     {
@@ -92,6 +98,8 @@ class SoftDeleteableFilter extends SQLFilter
      * @param string $class
      *
      * @phpstan-param class-string $class
+     *
+     * @return void
      */
     public function enableForEntity($class)
     {
@@ -101,9 +109,9 @@ class SoftDeleteableFilter extends SQLFilter
     }
 
     /**
-     * @return SoftDeleteableListener
-     *
      * @throws \RuntimeException
+     *
+     * @return SoftDeleteableListener
      */
     protected function getListener()
     {
@@ -111,7 +119,7 @@ class SoftDeleteableFilter extends SQLFilter
             $em = $this->getEntityManager();
             $evm = $em->getEventManager();
 
-            foreach ($evm->getListeners() as $listeners) {
+            foreach ($evm->getAllListeners() as $listeners) {
                 foreach ($listeners as $listener) {
                     if ($listener instanceof SoftDeleteableListener) {
                         $this->listener = $listener;
@@ -135,9 +143,7 @@ class SoftDeleteableFilter extends SQLFilter
     protected function getEntityManager()
     {
         if (null === $this->entityManager) {
-            $getEntityManager = \Closure::bind(function (): EntityManagerInterface {
-                return $this->em;
-            }, $this, parent::class);
+            $getEntityManager = \Closure::bind(fn (): EntityManagerInterface => $this->em, $this, parent::class);
 
             $this->entityManager = $getEntityManager();
         }

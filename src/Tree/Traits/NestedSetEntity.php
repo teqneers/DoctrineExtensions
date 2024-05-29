@@ -14,7 +14,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
- * NestedSet Trait, usable with PHP >= 5.4
+ * Trait for objects in a nested tree.
+ *
+ * This implementation provides a mapping configuration for the Doctrine ORM for entities using numeric primary keys.
  *
  * @author Renaat De Muynck <renaat.demuynck@gmail.com>
  */
@@ -22,33 +24,45 @@ trait NestedSetEntity
 {
     /**
      * @var int
+     *
      * @Gedmo\TreeRoot
+     *
      * @ORM\Column(name="root", type="integer", nullable=true)
      */
     #[ORM\Column(name: 'root', type: Types::INTEGER, nullable: true)]
+    #[Gedmo\TreeRoot]
     private $root;
 
     /**
      * @var int
+     *
      * @Gedmo\TreeLevel
+     *
      * @ORM\Column(name="lvl", type="integer")
      */
     #[ORM\Column(name: 'lvl', type: Types::INTEGER)]
+    #[Gedmo\TreeLevel]
     private $level;
 
     /**
      * @var int
+     *
      * @Gedmo\TreeLeft
+     *
      * @ORM\Column(name="lft", type="integer")
      */
     #[ORM\Column(name: 'lft', type: Types::INTEGER)]
+    #[Gedmo\TreeLeft]
     private $left;
 
     /**
      * @var int
+     *
      * @Gedmo\TreeRight
+     *
      * @ORM\Column(name="rgt", type="integer")
      */
     #[ORM\Column(name: 'rgt', type: Types::INTEGER)]
+    #[Gedmo\TreeRight]
     private $right;
 }

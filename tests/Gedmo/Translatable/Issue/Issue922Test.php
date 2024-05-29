@@ -9,7 +9,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Gedmo\Tests\Translatable;
+namespace Gedmo\Tests\Translatable\Issue;
 
 use Doctrine\Common\EventManager;
 use Doctrine\ORM\Query;
@@ -22,12 +22,12 @@ use Gedmo\Translatable\TranslatableListener;
 
 final class Issue922Test extends BaseTestCaseORM
 {
-    public const POST = Post::class;
-    public const TRANSLATION = Translation::class;
+    private const POST = Post::class;
+    private const TRANSLATION = Translation::class;
 
-    public const TREE_WALKER_TRANSLATION = TranslationWalker::class;
+    private const TREE_WALKER_TRANSLATION = TranslationWalker::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -43,10 +43,7 @@ final class Issue922Test extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldTranslateDateFields()
+    public function testShouldTranslateDateFields(): void
     {
         $p1 = new Post();
         $p1->setPublishedAt(new \DateTime());
@@ -90,7 +87,7 @@ final class Issue922Test extends BaseTestCaseORM
         static::assertFalse($p1->getBoolean());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::POST,

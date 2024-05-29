@@ -34,19 +34,19 @@ class Article
     private $id;
 
     /**
-     * @var string|null
-     *
      * @ORM\Column(length=64)
      */
     #[ORM\Column(length: 64)]
-    private $title;
+    private ?string $title = null;
 
     /**
      * @var string|null
      *
      * @Gedmo\Slug(updatable=true, unique=true, fields={"title"})
+     *
      * @ORM\Column(length=64, unique=true, nullable=true)
      */
+    #[Gedmo\Slug(updatable: true, unique: true, fields: ['title'])]
     #[ORM\Column(length: 64, unique: true, nullable: true)]
     private $slug;
 

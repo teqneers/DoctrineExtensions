@@ -23,8 +23,8 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class ChangeTest extends BaseTestCaseORM
 {
-    public const TEST_IP = '34.234.1.10';
-    public const FIXTURE = TitledArticle::class;
+    private const TEST_IP = '34.234.1.10';
+    private const FIXTURE = TitledArticle::class;
 
     /**
      * @var IpTraceableListener
@@ -59,7 +59,7 @@ final class ChangeTest extends BaseTestCaseORM
         $this->em->persist($test);
         $this->em->flush();
         $this->em->clear();
-        //Changed
+        // Changed
         static::assertSame(self::TEST_IP, $test->getChtitle());
 
         $this->listener->setIpValue('127.0.0.1');
@@ -69,7 +69,7 @@ final class ChangeTest extends BaseTestCaseORM
         $this->em->persist($test);
         $this->em->flush();
         $this->em->clear();
-        //Not Changed
+        // Not Changed
         static::assertSame(self::TEST_IP, $test->getChtitle());
     }
 

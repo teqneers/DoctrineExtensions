@@ -12,7 +12,10 @@ namespace Gedmo\Loggable\Entity\Repository;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query;
+use Gedmo\Exception\RuntimeException;
+use Gedmo\Exception\UnexpectedValueException;
 use Gedmo\Loggable\Entity\MappedSuperclass\AbstractLogEntry;
+use Gedmo\Loggable\Loggable;
 use Gedmo\Loggable\LoggableListener;
 use Gedmo\Tool\Wrapper\EntityWrapper;
 
@@ -21,15 +24,19 @@ use Gedmo\Tool\Wrapper\EntityWrapper;
  * to interact with log entries.
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @phpstan-template T of Loggable|object
+ *
+ * @phpstan-extends EntityRepository<AbstractLogEntry<T>>
  */
 class LogEntryRepository extends EntityRepository
 {
     /**
      * Currently used loggable listener
      *
-     * @var LoggableListener
+     * @phpstan-var LoggableListener<T>|null
      */
-    private $listener;
+    private ?LoggableListener $listener = null;
 
     /**
      * Loads all log entries for the given entity
@@ -37,12 +44,14 @@ class LogEntryRepository extends EntityRepository
      * @param object $entity
      *
      * @return AbstractLogEntry[]
+     *
+     * @phpstan-param T $entity
+     *
+     * @phpstan-return array<array-key, AbstractLogEntry<T>>
      */
     public function getLogEntries($entity)
     {
-        $q = $this->getLogEntriesQuery($entity);
-
-        return $q->getResult();
+        return $this->getLogEntriesQuery($entity)->getResult();
     }
 
     /**
@@ -51,10 +60,12 @@ class LogEntryRepository extends EntityRepository
      * @param object $entity
      *
      * @return Query
+     *
+     * @phpstan-param T $entity
      */
     public function getLogEntriesQuery($entity)
     {
-        $wrapped = new EntityWrapper($entity, $this->_em);
+        $wrapped = new EntityWrapper($entity, $this->getEntityManager());
         $objectClass = $wrapped->getMetadata()->getName();
         $meta = $this->getClassMetadata();
         $dql = "SELECT log FROM {$meta->getName()} log";
@@ -62,9 +73,12 @@ class LogEntryRepository extends EntityRepository
         $dql .= ' AND log.objectClass = :objectClass';
         $dql .= ' ORDER BY log.version DESC';
 
-        $objectId = (string) $wrapped->getIdentifier();
-        $q = $this->_em->createQuery($dql);
-        $q->setParameters(compact('objectId', 'objectClass'));
+        $objectId = (string) $wrapped->getIdentifier(false, true);
+        $q = $this->getEntityManager()->createQuery($dql);
+        $q->setParameters([
+            'objectId' => $objectId,
+            'objectClass' => $objectClass,
+        ]);
 
         return $q;
     }
@@ -78,13 +92,15 @@ class LogEntryRepository extends EntityRepository
      * @param object $entity
      * @param int    $version
      *
-     * @throws \Gedmo\Exception\UnexpectedValueException
+     * @throws UnexpectedValueException
      *
      * @return void
+     *
+     * @phpstan-param T $entity
      */
     public function revert($entity, $version = 1)
     {
-        $wrapped = new EntityWrapper($entity, $this->_em);
+        $wrapped = new EntityWrapper($entity, $this->getEntityManager());
         $objectMeta = $wrapped->getMetadata();
         $objectClass = $objectMeta->getName();
         $meta = $this->getClassMetadata();
@@ -92,40 +108,55 @@ class LogEntryRepository extends EntityRepository
         $dql .= ' WHERE log.objectId = :objectId';
         $dql .= ' AND log.objectClass = :objectClass';
         $dql .= ' AND log.version <= :version';
-        $dql .= ' ORDER BY log.version ASC';
+        $dql .= ' ORDER BY log.version DESC';
 
-        $objectId = (string) $wrapped->getIdentifier();
-        $q = $this->_em->createQuery($dql);
-        $q->setParameters(compact('objectId', 'objectClass', 'version'));
-        $logs = $q->getResult();
+        $objectId = (string) $wrapped->getIdentifier(false, true);
+        $q = $this->getEntityManager()->createQuery($dql);
+        $q->setParameters([
+            'objectId' => $objectId,
+            'objectClass' => $objectClass,
+            'version' => $version,
+        ]);
 
-        if ($logs) {
-            $config = $this->getLoggableListener()->getConfiguration($this->_em, $objectMeta->getName());
-            $fields = $config['versioned'];
-            $filled = false;
-            while (($log = array_pop($logs)) && !$filled) {
-                if ($data = $log->getData()) {
-                    foreach ($data as $field => $value) {
-                        if (in_array($field, $fields, true)) {
-                            $this->mapValue($objectMeta, $field, $value);
-                            $wrapped->setPropertyValue($field, $value);
-                            unset($fields[array_search($field, $fields, true)]);
-                        }
+        $config = $this->getLoggableListener()->getConfiguration($this->getEntityManager(), $objectMeta->getName());
+        $fields = $config['versioned'];
+        $filled = false;
+        $logsFound = false;
+
+        $logs = $q->toIterable();
+        assert($logs instanceof \Generator);
+
+        while ((null !== $log = $logs->current()) && !$filled) {
+            $logsFound = true;
+            $logs->next();
+            if ($data = $log->getData()) {
+                foreach ($data as $field => $value) {
+                    if (in_array($field, $fields, true)) {
+                        $this->mapValue($objectMeta, $field, $value);
+                        $wrapped->setPropertyValue($field, $value);
+                        unset($fields[array_search($field, $fields, true)]);
                     }
                 }
-                $filled = 0 === count($fields);
             }
-            /*if (count($fields)) {
-                throw new \Gedmo\Exception\UnexpectedValueException('Could not fully revert the entity to version: '.$version);
-            }*/
-        } else {
-            throw new \Gedmo\Exception\UnexpectedValueException('Could not find any log entries under version: '.$version);
+            $filled = [] === $fields;
         }
+
+        if (!$logsFound) {
+            throw new UnexpectedValueException('Could not find any log entries under version: '.$version);
+        }
+
+        /*if (count($fields)) {
+            throw new \Gedmo\Exception\UnexpectedValueException('Could not fully revert the entity to version: '.$version);
+        }*/
     }
 
     /**
      * @param string $field
      * @param mixed  $value
+     *
+     * @return void
+     *
+     * @phpstan-param ClassMetadata<T> $objectMeta
      */
     protected function mapValue(ClassMetadata $objectMeta, $field, &$value)
     {
@@ -134,19 +165,21 @@ class LogEntryRepository extends EntityRepository
         }
 
         $mapping = $objectMeta->getAssociationMapping($field);
-        $value = $value ? $this->_em->getReference($mapping['targetEntity'], $value) : null;
+        $value = $value ? $this->getEntityManager()->getReference($mapping['targetEntity'], $value) : null;
     }
 
     /**
      * Get the currently used LoggableListener
      *
-     * @throws \Gedmo\Exception\RuntimeException if listener is not found
+     * @throws RuntimeException if listener is not found
+     *
+     * @phpstan-return LoggableListener<T>
      */
     private function getLoggableListener(): LoggableListener
     {
         if (null === $this->listener) {
-            foreach ($this->_em->getEventManager()->getListeners() as $event => $listeners) {
-                foreach ($listeners as $hash => $listener) {
+            foreach ($this->getEntityManager()->getEventManager()->getAllListeners() as $listeners) {
+                foreach ($listeners as $listener) {
                     if ($listener instanceof LoggableListener) {
                         $this->listener = $listener;
 
@@ -156,7 +189,7 @@ class LogEntryRepository extends EntityRepository
             }
 
             if (null === $this->listener) {
-                throw new \Gedmo\Exception\RuntimeException('The loggable listener could not be found');
+                throw new RuntimeException('The loggable listener could not be found');
             }
         }
 

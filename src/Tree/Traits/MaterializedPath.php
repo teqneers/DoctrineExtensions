@@ -13,7 +13,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
 /**
- * MaterializedPath Trait
+ * Trait for objects in a materialized path tree.
+ *
+ *  This implementation does not provide any mapping configurations.
  *
  * @author Steffen Roßkamp <steffen.rosskamp@gimmickmedia.de>
  */
@@ -23,18 +25,22 @@ trait MaterializedPath
      * @var string
      */
     protected $path;
+
     /**
-     * @var self
+     * @var self|null
      */
     protected $parent;
+
     /**
      * @var int
      */
     protected $level;
+
     /**
-     * @var Collection|self[]
+     * @var Collection<int, self>|self[]|null
      */
     protected $children;
+
     /**
      * @var string
      */
@@ -45,7 +51,7 @@ trait MaterializedPath
      *
      * @return self
      */
-    public function setParent(self $parent = null)
+    public function setParent(?self $parent = null)
     {
         $this->parent = $parent;
 
@@ -109,7 +115,7 @@ trait MaterializedPath
     }
 
     /**
-     * @param Collection|self[] $children
+     * @param Collection<int, self>|self[] $children
      *
      * @return self
      */
@@ -121,10 +127,10 @@ trait MaterializedPath
     }
 
     /**
-     * @return Collection|self[]
+     * @return Collection<int, self>|self[]
      */
     public function getChildren()
     {
-        return $this->children = $this->children ?: new ArrayCollection();
+        return $this->children ??= new ArrayCollection();
     }
 }

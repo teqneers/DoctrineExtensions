@@ -29,12 +29,12 @@ use Gedmo\Tree\TreeListener;
  */
 final class TranslatableSluggableTreeTest extends BaseTestCaseORM
 {
-    public const CATEGORY = BehavioralCategory::class;
-    public const ARTICLE = Article::class;
-    public const COMMENT = Comment::class;
-    public const TRANSLATION = Translation::class;
+    private const CATEGORY = BehavioralCategory::class;
+    private const ARTICLE = Article::class;
+    private const COMMENT = Comment::class;
+    private const TRANSLATION = Translation::class;
 
-    private $translatableListener;
+    private TranslatableListener $translatableListener;
 
     protected function setUp(): void
     {
@@ -47,11 +47,11 @@ final class TranslatableSluggableTreeTest extends BaseTestCaseORM
         $evm->addEventSubscriber(new SluggableListener());
         $evm->addEventSubscriber($this->translatableListener);
 
-        $this->getMockSqliteEntityManager($evm);
+        $this->getDefaultMockSqliteEntityManager($evm);
         $this->populate();
     }
 
-    public function testNestedBehaviors()
+    public function testNestedBehaviors(): void
     {
         $vegies = $this->em->getRepository(self::CATEGORY)
             ->findOneBy(['title' => 'Vegitables']);
@@ -90,7 +90,7 @@ final class TranslatableSluggableTreeTest extends BaseTestCaseORM
         static::assertSame('deutschebles', $translations['de_DE']['slug']);
     }
 
-    public function testTranslations()
+    public function testTranslations(): void
     {
         $this->populateDeTranslations();
         $repo = $this->em->getRepository(self::CATEGORY);
@@ -114,7 +114,7 @@ final class TranslatableSluggableTreeTest extends BaseTestCaseORM
         static::assertSame('Lebensmittel', $food->getTitle());
     }
 
-    protected function getUsedEntityFixtures()
+    protected function getUsedEntityFixtures(): array
     {
         return [
             self::CATEGORY,

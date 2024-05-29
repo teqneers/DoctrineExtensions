@@ -23,7 +23,7 @@ use Gedmo\Tests\Tool\BaseTestCaseORM;
  */
 final class TraitUsageTest extends BaseTestCaseORM
 {
-    public const TARGET = UsingTrait::class;
+    private const TARGET = UsingTrait::class;
 
     protected function setUp(): void
     {
@@ -37,10 +37,7 @@ final class TraitUsageTest extends BaseTestCaseORM
         $this->getDefaultMockSqliteEntityManager($evm);
     }
 
-    /**
-     * @test
-     */
-    public function shouldTimestampUsingTrait(): void
+    public function testShouldTimestampUsingTrait(): void
     {
         $sport = new UsingTrait();
         $sport->setTitle('Sport');
@@ -52,10 +49,7 @@ final class TraitUsageTest extends BaseTestCaseORM
         static::assertNotNull($sport->getUpdatedBy());
     }
 
-    /**
-     * @test
-     */
-    public function traitMethodthShouldReturnObject(): void
+    public function testTraitMethodthShouldReturnObject(): void
     {
         $sport = new UsingTrait();
         static::assertInstanceOf(self::TARGET, $sport->setCreatedBy('myuser'));

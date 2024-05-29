@@ -10,29 +10,30 @@
 namespace Gedmo\Tool\Wrapper;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
 use ProxyManager\Proxy\GhostObjectInterface;
 
 /**
  * Wraps document or proxy for more convenient
  * manipulation
  *
+ * @phpstan-extends AbstractWrapper<ClassMetadata>
+ *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
+ *
+ * @final since gedmo/doctrine-extensions 3.11
  */
 class MongoDocumentWrapper extends AbstractWrapper
 {
     /**
      * Document identifier
-     *
-     * @var mixed
      */
-    private $identifier;
+    private ?string $identifier = null;
 
     /**
      * True if document or proxy is loaded
-     *
-     * @var bool
      */
-    private $initialized = false;
+    private bool $initialized = false;
 
     /**
      * Wrap document
@@ -46,9 +47,6 @@ class MongoDocumentWrapper extends AbstractWrapper
         $this->meta = $dm->getClassMetadata(get_class($this->object));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPropertyValue($property)
     {
         $this->initialize();
@@ -56,17 +54,11 @@ class MongoDocumentWrapper extends AbstractWrapper
         return $this->meta->getReflectionProperty($property)->getValue($this->object);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRootObjectName()
     {
         return $this->meta->rootDocumentName;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setPropertyValue($property, $value)
     {
         $this->initialize();
@@ -75,18 +67,17 @@ class MongoDocumentWrapper extends AbstractWrapper
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function hasValidIdentifier()
     {
         return (bool) $this->getIdentifier();
     }
 
     /**
-     * {@inheritdoc}
+     * @param bool $flatten
+     *
+     * @return string
      */
-    public function getIdentifier($single = true)
+    public function getIdentifier($single = true, $flatten = false)
     {
         if (!$this->identifier) {
             if ($this->object instanceof GhostObjectInterface) {
@@ -105,9 +96,6 @@ class MongoDocumentWrapper extends AbstractWrapper
         return $this->identifier;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isEmbeddedAssociation($field)
     {
         return $this->getMetadata()->isSingleValuedEmbed($field);
@@ -116,6 +104,8 @@ class MongoDocumentWrapper extends AbstractWrapper
     /**
      * Initialize the document if it is proxy
      * required when is detached or not initialized
+     *
+     * @return void
      */
     protected function initialize()
     {
@@ -129,9 +119,7 @@ class MongoDocumentWrapper extends AbstractWrapper
                         $identifier = $this->getIdentifier();
                     } else {
                         // this may not happen but in case
-                        $getIdentifier = \Closure::bind(function () {
-                            return $this->identifier;
-                        }, $this->object, get_class($this->object));
+                        $getIdentifier = \Closure::bind(fn () => $this->identifier, $this->object, get_class($this->object));
 
                         $identifier = $getIdentifier();
                     }
